@@ -85,6 +85,9 @@
         <Reference Include="UnityEngine.ParticleSystemModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>..\..\..\SteamLibrary\steamapps\common\ROUNDS\Rounds_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
         </Reference>
+        <Reference Include="UnityEngine.Physics2DModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <HintPath>..\..\..\SteamLibrary\steamapps\common\ROUNDS\Rounds_Data\Managed\UnityEngine.Physics2DModule.dll</HintPath>
+        </Reference>
         <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>..\..\..\SteamLibrary\steamapps\common\ROUNDS\Rounds_Data\Managed\UnityEngine.UI.dll</HintPath>
         </Reference>
@@ -97,7 +100,10 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="LocalZoom.cs" />
+        <Compile Include="Patches\ObjectsToSpawn.cs" />
+        <Compile Include="Patches\ProjectileHit.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="ViewSphere.cs" />
     </ItemGroup>
     <ItemGroup>
       <Content Include=".gitignore" />
@@ -105,9 +111,6 @@
       <Content Include="README.md" />
       <Content Include="ThunderStore\manifest.json" />
       <Content Include="publish.ps1" />
-    </ItemGroup>
-    <ItemGroup>
-      <Folder Include="Patches" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

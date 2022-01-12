@@ -29,8 +29,10 @@ namespace LocalZoom
         
         public bool enableCamera = true;
 
-        private AssetBundle shaderBundle;
-        
+        public static AssetBundle shaderBundle;
+
+        public Harmony harmony;
+
         // Sources:
         // Sprite stencil shader (Modified) https://prime31.github.io/stencil-buffer-occlusion/
         // Sprites default shader https://github.com/nubick/unity-utils/blob/master/sources/Assets/Scripts/Shaders/Sprites-Default.shader
@@ -49,7 +51,7 @@ namespace LocalZoom
         {
             instance = this;
             
-            var harmony = new Harmony(ModId);
+            harmony = new Harmony(ModId);
             harmony.PatchAll();
 
             // Unbound.RegisterClientSideMod(ModId);
@@ -57,12 +59,18 @@ namespace LocalZoom
             GameModeManager.AddHook(GameModeHooks.HookRoundEnd, RoundEnd);
             GameModeManager.AddHook(GameModeHooks.HookPickStart, StartPickPhase);
             GameModeManager.AddHook(GameModeHooks.HookPickEnd,EndPickPhase);
-            
-            
-            shaderBundle = AssetUtils.LoadAssetBundleFromResources("localcam", typeof(LocalZoom).Assembly);
-            if (shaderBundle == null)
+
+            try
             {
-                UnityEngine.Debug.LogError("Couldn't find shaderBundle?");
+                shaderBundle = AssetUtils.LoadAssetBundleFromResources("localcam", typeof(LocalZoom).Assembly);
+                if (shaderBundle == null)
+                {
+                    UnityEngine.Debug.LogError("Couldn't find shaderBundle?");
+                }
+            }
+            catch
+            {
+                // ignored
             }
         }
 
@@ -134,6 +142,52 @@ namespace LocalZoom
                     if (MapManager.instance.currentLevelID != 0)
                     {
                         MapManager.instance.currentMap.Map.size = defaultMapSize;
+                    }
+                }
+            }
+
+            if (Input.GetKeyDown(KeyCode.N))
+            {
+                var obj = new GameObject("ViewSphere");
+                obj.AddComponent<MeshFilter>();
+                var renderer = obj.AddComponent<MeshRenderer>();
+                renderer.material = new Material(shaderBundle.LoadAsset<Shader>("CustomPortal"));
+                var player = PlayerManager.instance.players.FirstOrDefault(p => p.data.view.IsMine);
+                if (player == null) return;
+                obj.AddComponent<ViewSphere>().player = player;
+                obj.transform.SetParent(player.transform);
+                obj.transform.localPosition = Vector3.zero;
+                obj.transform.SetZPosition(5);
+                obj.transform.localRotation = Quaternion.identity;
+
+                var black = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"), player.transform);
+                black.transform.localPosition = Vector3.zero;
+                var circle = Instantiate(shaderBundle.LoadAsset<GameObject>("PlayerCircle"), player.transform);
+                circle.transform.localPosition = Vector3.zero;
+                circle.transform.localScale = Vector3.one * 2.65f;
+            }
+
+            if (Input.GetKeyDown(KeyCode.M))
+            {
+                var mat = new Material(shaderBundle.LoadAsset<Shader>("CustomHidden"));
+                foreach (var player in PlayerManager.instance.players)
+                {
+                    MakeObjectHidden(player);
+                    
+                    foreach (var renderer in player.data.weaponHandler.gun.GetComponentsInChildren<SpriteRenderer>(true))
+                    {
+                        if (renderer.material.name.Contains("Default"))
+                        {
+                            renderer.material = mat;
+                        }
+                        else
+                        {
+                            renderer.material.shader = mat.shader;
+                        }
+                    }
+                    foreach (var img in player.data.weaponHandler.gun.GetComponentsInChildren<Image>(true))
+                    {
+                        img.material = mat;
                     }
                 }
             }
@@ -262,12 +316,69 @@ namespace LocalZoom
             // }
         }
 
+        public static void MakeObjectHidden(Component obj)
+        {
+            var mat = new Material(shaderBundle.LoadAsset<Shader>("CustomHidden"));
+            foreach (var renderer in obj.GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                ChangeMaterial(renderer, mat);
+            }
+            foreach (var img in obj.GetComponentsInChildren<Image>(true))
+            {
+                img.material = mat;
+            }
+            foreach (var renderer in obj.GetComponentsInChildren<ParticleSystemRenderer>(true))
+            {
+                ChangeMaterial(renderer, mat);
+            }
+            foreach (var renderer in obj.GetComponentsInChildren<TrailRenderer>(true))
+            {
+                ChangeMaterial(renderer, mat);
+            }
+        }
+
+        private static void ChangeMaterial(Renderer renderer, Material mat)
+        {
+            var mats = renderer.materials;
+            for (var i = 0; i < renderer.materials.Length; i++)
+            {
+                if (renderer.materials[i].name.Contains("Default"))
+                {
+                    mats[i] = mat;
+                }
+                else
+                {
+                    //TODO: Block circle becomes triangle, why?
+                    UnityEngine.Debug.Log("------");
+                    // var colorCopy = mats[i].color;
+                    if (mats[i].mainTexture != null)
+                    {
+                        UnityEngine.Debug.Log(mats[i].mainTexture.name);
+                    }
+                    var textureCopy = mats[i].mainTexture;
+                    mats[i] = mat;
+                    // mats[i].color = colorCopy;
+                    if(mats[i].mainTexture != null && mats[i].mainTexture.name.Contains("Triangle2"))
+                    {
+                        UnityEngine.Debug.Log("WHy?");
+                    }
+                    mats[i].mainTexture = textureCopy;
+                    if (mats[i].mainTexture != null)
+                    {
+                        UnityEngine.Debug.Log(mats[i].mainTexture.name);
+                    }
+                }
+            }
+            renderer.materials = mats;
+        }
+
         private void OnDestroy()
         {
             GameModeManager.RemoveHook(GameModeHooks.HookRoundStart, RoundStart);
             GameModeManager.RemoveHook(GameModeHooks.HookRoundEnd, RoundEnd);
             GameModeManager.RemoveHook(GameModeHooks.HookPickStart, StartPickPhase);
             GameModeManager.RemoveHook(GameModeHooks.HookPickEnd,EndPickPhase);
+            harmony.UnpatchAll();
         }
     }
 }
