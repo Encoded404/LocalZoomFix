@@ -100,6 +100,8 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="LocalZoom.cs" />
+        <Compile Include="Patches\HealthHandler.cs" />
+        <Compile Include="Patches\PlayerManager.cs" />
         <Compile Include="Patches\ObjectsToSpawn.cs" />
         <Compile Include="Patches\ProjectileHit.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />

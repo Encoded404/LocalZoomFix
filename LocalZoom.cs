@@ -4,6 +4,7 @@ using BepInEx;
 using HarmonyLib;
 using Jotunn.Utils;
 using Photon.Pun;
+using TMPro;
 using UnboundLib;
 using UnboundLib.GameModes;
 using UnityEngine;
@@ -23,11 +24,10 @@ namespace LocalZoom
 
         public static LocalZoom instance;
 
-        public static GameObject border;
-
         public static float defaultMapSize = 20f;
         
         public bool enableCamera = true;
+        public bool enableResetCamera = false;
 
         public static AssetBundle shaderBundle;
 
@@ -42,10 +42,21 @@ namespace LocalZoom
         //TODO: 
         // - Patch the outofbounds bounce handler so it doesn't bounce of the camera bounds
         // - Patch the cardbar preview card to be screen space instead of world space
+        // can't see bullet impact
         
         //TODO IMPORTANT:
         // Somehow figure out why the stencil is showing the particles and not just nothing
 
+
+        private void Awake()
+        {
+            On.MainMenuHandler.Awake += (orig, self) =>
+            {
+                enableResetCamera = false;
+                enableCamera = true;
+                orig(self);
+            };
+        }
 
         private void Start()
         {
@@ -59,6 +70,8 @@ namespace LocalZoom
             GameModeManager.AddHook(GameModeHooks.HookRoundEnd, RoundEnd);
             GameModeManager.AddHook(GameModeHooks.HookPickStart, StartPickPhase);
             GameModeManager.AddHook(GameModeHooks.HookPickEnd,EndPickPhase);
+            GameModeManager.AddHook(GameModeHooks.HookGameStart, GameStarted);
+            GameModeManager.AddHook(GameModeHooks.HookPointStart, PointStart);
 
             try
             {
@@ -83,7 +96,7 @@ namespace LocalZoom
                 return;
 
 
-            if(GameManager.instance.battleOngoing && !CardChoice.instance.IsPicking) {
+            if(GameManager.instance.battleOngoing && !CardChoice.instance.IsPicking && !enableResetCamera) {
                 if (enableCamera)
                 {
                     var player = PlayerManager.instance.players.FirstOrDefault(p => p.data.view.IsMine);
@@ -93,35 +106,6 @@ namespace LocalZoom
                     var gunTransform = player.data.weaponHandler.gun.transform.GetChild(0);
                     // SetCameraPosition(gunTransform.position + gunTransform.forward*1.5f);
                     SetCameraPosition(player.transform.position);
-                    
-                    try
-                    {
-                        border.transform.position = Vector3.zero;
-                    }
-                    // If border is null we set it up
-                    catch
-                    {
-                        #if DEBUG
-                        if (SceneManager.GetSceneAt(0).GetRootGameObjects()
-                                .FirstOrDefault(o => o.name == "BorderCanvas") != null)
-                        {
-                            border = SceneManager.GetSceneAt(0).GetRootGameObjects()
-                                .FirstOrDefault(o => o.name == "BorderCanvas")
-                                ?.transform.GetChild(0).gameObject;
-                        }
-                        else
-                        {
-                        #endif
-                            MapManager.instance.currentMap.Map.size = defaultMapSize;
-                            border = UIHandler.instance.transform.Find("Canvas/Border").gameObject;
-                            var canvas = new GameObject("BorderCanvas").AddComponent<Canvas>();
-                            border.transform.SetParent(canvas.transform);
-                            border.transform.position = Vector3.zero;
-                            canvas.renderMode = RenderMode.WorldSpace;
-#if DEBUG
-                        }
-                        #endif
-                    }
 
                     if (Input.mouseScrollDelta.y > 0)
                     {
@@ -134,15 +118,13 @@ namespace LocalZoom
                     }
                 }
             }
-            else
+
+            if (!CardChoice.instance.IsPicking && enableResetCamera)
             {
                 SetCameraPosition(Vector3.zero);
-                if (!CardChoice.instance.IsPicking)
+                if (MapManager.instance.currentLevelID != 0)
                 {
-                    if (MapManager.instance.currentLevelID != 0)
-                    {
-                        MapManager.instance.currentMap.Map.size = defaultMapSize;
-                    }
+                    MapManager.instance.currentMap.Map.size = defaultMapSize;
                 }
             }
 
@@ -169,13 +151,15 @@ namespace LocalZoom
 
             if (Input.GetKeyDown(KeyCode.M))
             {
-                var mat = new Material(shaderBundle.LoadAsset<Shader>("CustomHidden"));
+                var shad = shaderBundle.LoadAsset<Shader>("CustomHidden");
+                var mat = new Material(shad);
                 foreach (var player in PlayerManager.instance.players)
                 {
                     MakeObjectHidden(player);
                     
                     foreach (var renderer in player.data.weaponHandler.gun.GetComponentsInChildren<SpriteRenderer>(true))
                     {
+                        if(renderer.material.shader == shad) continue;
                         if (renderer.material.name.Contains("Default"))
                         {
                             renderer.material = mat;
@@ -187,6 +171,7 @@ namespace LocalZoom
                     }
                     foreach (var img in player.data.weaponHandler.gun.GetComponentsInChildren<Image>(true))
                     {
+                        if(img.material.shader == shad) continue;
                         img.material = mat;
                     }
                 }
@@ -268,14 +253,22 @@ namespace LocalZoom
 
         IEnumerator RoundEnd(IGameModeHandler gm)
         {
-            SetCameraPosition(Vector3.zero);
-            MapManager.instance.currentMap.Map.size = defaultMapSize;
+            enableResetCamera = false;
             yield break;
         }
         
         IEnumerator RoundStart(IGameModeHandler gm)
         {
+            // If not in sandbox and in offlinemode return
+            if (!(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode)
+                yield break;
             // SetCameraPosition(Vector3.zero, true);
+
+            yield break;
+        }
+
+        IEnumerator PointStart(IGameModeHandler gm)
+        {
             this.ExecuteAfterSeconds(1f, () =>
             {
                 MapManager.instance.currentMap.Map.size = defaultMapSize/2f;
@@ -285,12 +278,18 @@ namespace LocalZoom
 
         IEnumerator StartPickPhase(IGameModeHandler gm)
         {
+            if (!(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode)
+                yield break;
             enableCamera = false;
+            enableResetCamera = false;
             yield break;
         }
         IEnumerator EndPickPhase(IGameModeHandler gm)
         {
+            if (!(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode)
+                yield break;
             StartCoroutine(DisableCameraTemp());
+            enableResetCamera = true;
             yield break;
         }
 
@@ -301,9 +300,15 @@ namespace LocalZoom
             enableCamera = true;
         }
 
+        IEnumerator GameStarted(IGameModeHandler gm)
+        {
+
+            yield break;
+        }
+
         public void SetCameraPosition(Vector3 pos, bool snap = false)
         {
-            var mainCam = MainCam.instance.gameObject.transform;
+            var mainCam = MainCam.instance.transform;
             mainCam.position = snap? pos : Vector3.Lerp(mainCam.position, pos, Time.deltaTime * 5);
             mainCam.SetZPosition(-100);
             var lightCam = MainCam.instance.transform.parent.GetChild(1).GetChild(0);
@@ -325,6 +330,7 @@ namespace LocalZoom
             }
             foreach (var img in obj.GetComponentsInChildren<Image>(true))
             {
+                if(img.material.shader == mat.shader) continue;
                 img.material = mat;
             }
             foreach (var renderer in obj.GetComponentsInChildren<ParticleSystemRenderer>(true))
@@ -335,38 +341,31 @@ namespace LocalZoom
             {
                 ChangeMaterial(renderer, mat);
             }
+            foreach (var renderer in obj.GetComponentsInChildren<TextMeshProUGUI>(true))
+            {
+                if(renderer.material.shader == mat.shader) continue;
+                renderer.material = mat;
+            }
         }
 
-        private static void ChangeMaterial(Renderer renderer, Material mat)
+        private static void ChangeMaterial(Renderer renderer, Material hiddenMat)
         {
+            var mat = new Material(hiddenMat);
             var mats = renderer.materials;
             for (var i = 0; i < renderer.materials.Length; i++)
             {
+                if(renderer.materials[i].shader == mat.shader) continue;
                 if (renderer.materials[i].name.Contains("Default"))
                 {
                     mats[i] = mat;
                 }
                 else
                 {
-                    //TODO: Block circle becomes triangle, why?
-                    UnityEngine.Debug.Log("------");
                     // var colorCopy = mats[i].color;
-                    if (mats[i].mainTexture != null)
-                    {
-                        UnityEngine.Debug.Log(mats[i].mainTexture.name);
-                    }
                     var textureCopy = mats[i].mainTexture;
                     mats[i] = mat;
                     // mats[i].color = colorCopy;
-                    if(mats[i].mainTexture != null && mats[i].mainTexture.name.Contains("Triangle2"))
-                    {
-                        UnityEngine.Debug.Log("WHy?");
-                    }
                     mats[i].mainTexture = textureCopy;
-                    if (mats[i].mainTexture != null)
-                    {
-                        UnityEngine.Debug.Log(mats[i].mainTexture.name);
-                    }
                 }
             }
             renderer.materials = mats;

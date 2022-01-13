@@ -16,6 +16,7 @@ namespace LocalZoom.Patches
                 if (obj != null) { 
                     LocalZoom.MakeObjectHidden(obj.transform);
                     obj.AddComponent<TestMono>();
+                    GameObject.Destroy(obj.GetComponentInChildren<ChangeColor>());
                 }
             }
         }
