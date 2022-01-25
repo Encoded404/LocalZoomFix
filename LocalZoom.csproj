@@ -48,6 +48,9 @@
         <Reference Include="BepInEx, Version=5.4.11.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>C:\Users\tddeb\AppData\Roaming\r2modmanPlus-local\ROUNDS\profiles\Default\BepInEx\core\BepInEx.dll</HintPath>
         </Reference>
+        <Reference Include="MapEmbiggener, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <HintPath>C:\Users\tddeb\AppData\Roaming\r2modmanPlus-local\ROUNDS\profiles\Default\BepInEx\plugins\MapEmbiggener.dll</HintPath>
+        </Reference>
         <Reference Include="MMHOOK_Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>C:\Users\tddeb\AppData\Roaming\r2modmanPlus-local\ROUNDS\profiles\Default\BepInEx\plugins\willis81808-MMHook\MMHOOK_Assembly-CSharp.dll</HintPath>
         </Reference>
@@ -100,10 +103,15 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="LocalZoom.cs" />
+        <Compile Include="Numerators.cs" />
+        <Compile Include="Patches\ApplyCardStats.cs" />
+        <Compile Include="Patches\CardBar.cs" />
         <Compile Include="Patches\HealthHandler.cs" />
         <Compile Include="Patches\PlayerManager.cs" />
         <Compile Include="Patches\ObjectsToSpawn.cs" />
+        <Compile Include="Patches\ProceduralImage.cs" />
         <Compile Include="Patches\ProjectileHit.cs" />
+        <Compile Include="Patches\SpawnObjects.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="ViewSphere.cs" />
     </ItemGroup>
@@ -131,6 +139,12 @@
             <PackageVersion>%(PackAssembly.Version)</PackageVersion>
         </PropertyGroup>
     </Target>
+
+    <PropertyGroup>
+        <RoundsFolder>F:\SteamLibrary\steamapps\common\ROUNDS</RoundsFolder>
+        <IndirectBuildTask>true</IndirectBuildTask>
+        <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+    </PropertyGroup>
 
     <Target Name="PostBuildTaskWin" Condition="'$(OS)' == 'Windows_NT'" DependsOnTargets="Build" AfterTargets="Build">
         <CallTarget Targets="ReadPackageVersionFromOutputAssembly">

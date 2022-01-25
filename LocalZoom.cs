@@ -2,6 +2,7 @@
 using System.Linq;
 using BepInEx;
 using HarmonyLib;
+using JetBrains.Annotations;
 using Jotunn.Utils;
 using Photon.Pun;
 using TMPro;
@@ -10,10 +11,12 @@ using UnboundLib.GameModes;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.UI.ProceduralImage;
 
 namespace LocalZoom
 {
     [BepInDependency("com.willis.rounds.unbound")]
+    [BepInDependency("pykess.rounds.plugins.mapembiggener")]
     [BepInPlugin(ModId, ModName, Version)]
     [BepInProcess("Rounds.exe")]
     public class LocalZoom : BaseUnityPlugin
@@ -29,9 +32,10 @@ namespace LocalZoom
         public bool enableCamera = true;
         public bool enableResetCamera = false;
 
-        public static AssetBundle shaderBundle;
+        private static AssetBundle shaderBundle;
 
-        public Harmony harmony;
+        private Harmony harmony;
+        private static readonly int ColorProperty = Shader.PropertyToID("_Color");
 
         // Sources:
         // Sprite stencil shader (Modified) https://prime31.github.io/stencil-buffer-occlusion/
@@ -40,9 +44,8 @@ namespace LocalZoom
         // https://www.youtube.com/watch?v=CSeUMTaNFYk
 
         //TODO: 
-        // - Patch the outofbounds bounce handler so it doesn't bounce of the camera bounds
-        // - Patch the cardbar preview card to be screen space instead of world space
-        // can't see bullet impact
+        // can't see bullet impact only when shot right below player or shooting straight up
+        // block effects should be hidden
         
         //TODO IMPORTANT:
         // Somehow figure out why the stencil is showing the particles and not just nothing
@@ -66,12 +69,12 @@ namespace LocalZoom
             harmony.PatchAll();
 
             // Unbound.RegisterClientSideMod(ModId);
-            GameModeManager.AddHook(GameModeHooks.HookRoundStart, RoundStart);
-            GameModeManager.AddHook(GameModeHooks.HookRoundEnd, RoundEnd);
-            GameModeManager.AddHook(GameModeHooks.HookPickStart, StartPickPhase);
-            GameModeManager.AddHook(GameModeHooks.HookPickEnd,EndPickPhase);
-            GameModeManager.AddHook(GameModeHooks.HookGameStart, GameStarted);
-            GameModeManager.AddHook(GameModeHooks.HookPointStart, PointStart);
+            GameModeManager.AddHook(GameModeHooks.HookRoundStart, Numerators.RoundStart);
+            GameModeManager.AddHook(GameModeHooks.HookRoundEnd, Numerators.RoundEnd);
+            GameModeManager.AddHook(GameModeHooks.HookPickStart, Numerators.StartPickPhase);
+            GameModeManager.AddHook(GameModeHooks.HookPickEnd,Numerators.EndPickPhase);
+            GameModeManager.AddHook(GameModeHooks.HookGameStart, Numerators.GameStarted);
+            GameModeManager.AddHook(GameModeHooks.HookPointStart, Numerators.PointStart);
 
             try
             {
@@ -156,6 +159,11 @@ namespace LocalZoom
                 foreach (var player in PlayerManager.instance.players)
                 {
                     MakeObjectHidden(player);
+
+                    foreach (var sf in GetComponentsInChildren<SFPolygon>())
+                    {
+                        sf.enabled = false;
+                    }
                     
                     foreach (var renderer in player.data.weaponHandler.gun.GetComponentsInChildren<SpriteRenderer>(true))
                     {
@@ -251,61 +259,6 @@ namespace LocalZoom
             }
         }
 
-        IEnumerator RoundEnd(IGameModeHandler gm)
-        {
-            enableResetCamera = false;
-            yield break;
-        }
-        
-        IEnumerator RoundStart(IGameModeHandler gm)
-        {
-            // If not in sandbox and in offlinemode return
-            if (!(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode)
-                yield break;
-            // SetCameraPosition(Vector3.zero, true);
-
-            yield break;
-        }
-
-        IEnumerator PointStart(IGameModeHandler gm)
-        {
-            this.ExecuteAfterSeconds(1f, () =>
-            {
-                MapManager.instance.currentMap.Map.size = defaultMapSize/2f;
-            });
-            yield break;
-        }
-
-        IEnumerator StartPickPhase(IGameModeHandler gm)
-        {
-            if (!(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode)
-                yield break;
-            enableCamera = false;
-            enableResetCamera = false;
-            yield break;
-        }
-        IEnumerator EndPickPhase(IGameModeHandler gm)
-        {
-            if (!(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode)
-                yield break;
-            StartCoroutine(DisableCameraTemp());
-            enableResetCamera = true;
-            yield break;
-        }
-
-        IEnumerator DisableCameraTemp()
-        {
-            enableCamera = false;
-            yield return new WaitForSeconds(1);
-            enableCamera = true;
-        }
-
-        IEnumerator GameStarted(IGameModeHandler gm)
-        {
-
-            yield break;
-        }
-
         public void SetCameraPosition(Vector3 pos, bool snap = false)
         {
             var mainCam = MainCam.instance.transform;
@@ -323,17 +276,37 @@ namespace LocalZoom
 
         public static void MakeObjectHidden(Component obj)
         {
+            foreach (var img in obj.GetComponentsInChildren<ProceduralImage>(true))
+            {
+                UnityEngine.Debug.Log(img.transform.root);
+                if(img.transform.root.GetComponent<Player>().playerID != 0)//img.transform.root.GetComponent<PhotonView>() && !(img.transform.root.GetComponent<PhotonView>().IsMine) )
+                {
+                    var newMat = new Material(img.material);
+                    newMat.name = img.name;
+                    img.material = newMat;
+                    newMat.SetFloat("_Stencil", 69);
+                    newMat.SetFloat("_StencilComp", (float)UnityEngine.Rendering.CompareFunction.Equal);
+                }
+            }
+
+
             var mat = new Material(shaderBundle.LoadAsset<Shader>("CustomHidden"));
             foreach (var renderer in obj.GetComponentsInChildren<SpriteRenderer>(true))
             {
                 ChangeMaterial(renderer, mat);
             }
+
+            var procImgs = obj.GetComponentsInChildren<ProceduralImage>(true);
             foreach (var img in obj.GetComponentsInChildren<Image>(true))
             {
-                if(img.material.shader == mat.shader) continue;
+                if(img.material.shader == mat.shader || procImgs.Any(y => img.gameObject == y.gameObject)) continue;
                 img.material = mat;
             }
             foreach (var renderer in obj.GetComponentsInChildren<ParticleSystemRenderer>(true))
+            {
+                ChangeMaterial(renderer, mat);
+            }
+            foreach (var renderer in obj.GetComponentsInChildren<LineRenderer>(true))
             {
                 ChangeMaterial(renderer, mat);
             }
@@ -361,10 +334,16 @@ namespace LocalZoom
                 }
                 else
                 {
-                    // var colorCopy = mats[i].color;
+                    // Color colorCopy = default;
+                    // if(mats[i].HasProperty("_Color")) {
+                    //     colorCopy = mats[i].color;
+                    // }
                     var textureCopy = mats[i].mainTexture;
                     mats[i] = mat;
-                    // mats[i].color = colorCopy;
+                    // if (mats[i].HasProperty("_Color"))
+                    // {
+                    //     mats[i].SetColor(ColorProperty, colorCopy);
+                    // }
                     mats[i].mainTexture = textureCopy;
                 }
             }
@@ -373,11 +352,7 @@ namespace LocalZoom
 
         private void OnDestroy()
         {
-            GameModeManager.RemoveHook(GameModeHooks.HookRoundStart, RoundStart);
-            GameModeManager.RemoveHook(GameModeHooks.HookRoundEnd, RoundEnd);
-            GameModeManager.RemoveHook(GameModeHooks.HookPickStart, StartPickPhase);
-            GameModeManager.RemoveHook(GameModeHooks.HookPickEnd,EndPickPhase);
-            harmony.UnpatchAll();
+            harmony.UnpatchAll(ModId);
         }
     }
 }
