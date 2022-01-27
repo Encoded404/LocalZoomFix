@@ -106,9 +106,13 @@
         <Compile Include="Numerators.cs" />
         <Compile Include="Patches\ApplyCardStats.cs" />
         <Compile Include="Patches\CardBar.cs" />
+        <Compile Include="Patches\DamageBox.cs" />
+        <Compile Include="Patches\DeathEffect.cs" />
         <Compile Include="Patches\HealthHandler.cs" />
+        <Compile Include="Patches\PlayerJump.cs" />
         <Compile Include="Patches\PlayerManager.cs" />
         <Compile Include="Patches\ObjectsToSpawn.cs" />
+        <Compile Include="Patches\PlayerName.cs" />
         <Compile Include="Patches\ProceduralImage.cs" />
         <Compile Include="Patches\ProjectileHit.cs" />
         <Compile Include="Patches\SpawnObjects.cs" />

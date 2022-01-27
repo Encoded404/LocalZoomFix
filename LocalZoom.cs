@@ -31,6 +31,7 @@ namespace LocalZoom
         
         public bool enableCamera = true;
         public bool enableResetCamera = false;
+        public GameObject deathPortalBox;
 
         private static AssetBundle shaderBundle;
 
@@ -44,11 +45,13 @@ namespace LocalZoom
         // https://www.youtube.com/watch?v=CSeUMTaNFYk
 
         //TODO: 
-        // can't see bullet impact only when shot right below player or shooting straight up
-        // block effects should be hidden
+        // spectator camera when dead?
+        // BUG weird color change of the jump particle
         
-        //TODO IMPORTANT:
+        //TODO WEIRD:
         // Somehow figure out why the stencil is showing the particles and not just nothing
+        // looks like this is some bug with a sprite mask, all particles that are hidden by a sprite mask
+        // will always show up in any stencil buffer.
 
 
         private void Awake()
@@ -129,6 +132,18 @@ namespace LocalZoom
                 {
                     MapManager.instance.currentMap.Map.size = defaultMapSize;
                 }
+
+                if (deathPortalBox != null)
+                {
+                    deathPortalBox.SetActive(true);
+                }
+            }
+            else
+            {
+                if (deathPortalBox != null)
+                {
+                    deathPortalBox.SetActive(false);
+                }
             }
 
             if (Input.GetKeyDown(KeyCode.N))
@@ -142,14 +157,21 @@ namespace LocalZoom
                 obj.AddComponent<ViewSphere>().player = player;
                 obj.transform.SetParent(player.transform);
                 obj.transform.localPosition = Vector3.zero;
-                obj.transform.SetZPosition(5);
+                obj.transform.SetZPosition(50);
                 obj.transform.localRotation = Quaternion.identity;
 
                 var black = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"), player.transform);
                 black.transform.localPosition = Vector3.zero;
+                black.transform.localScale = Vector3.one * 100f;
                 var circle = Instantiate(shaderBundle.LoadAsset<GameObject>("PlayerCircle"), player.transform);
                 circle.transform.localPosition = Vector3.zero;
-                circle.transform.localScale = Vector3.one * 2.65f;
+                circle.transform.localScale = Vector3.one * 2.7f;
+                
+                deathPortalBox = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"));
+                deathPortalBox.transform.position = Vector3.zero;
+                deathPortalBox.transform.localScale = Vector3.one * 100f;
+                deathPortalBox.GetComponent<Renderer>().material = new Material(shaderBundle.LoadAsset<Shader>("CustomPortal"));
+                deathPortalBox.transform.SetZPosition(50);
             }
 
             if (Input.GetKeyDown(KeyCode.M))
@@ -160,28 +182,18 @@ namespace LocalZoom
                 {
                     MakeObjectHidden(player);
 
-                    foreach (var sf in GetComponentsInChildren<SFPolygon>())
+                    MakeObjectHidden(player.data.weaponHandler.gun);
+                    this.ExecuteAfterSeconds(0.5f, () =>
                     {
-                        sf.enabled = false;
-                    }
-                    
-                    foreach (var renderer in player.data.weaponHandler.gun.GetComponentsInChildren<SpriteRenderer>(true))
-                    {
-                        if(renderer.material.shader == shad) continue;
-                        if (renderer.material.name.Contains("Default"))
+                        foreach (var sf in player.GetComponentsInChildren<SFPolygon>())
                         {
-                            renderer.material = mat;
+                            sf.enabled = false;
                         }
-                        else
+                        foreach (var sf in player.data.weaponHandler.gun.GetComponentsInChildren<SFPolygon>())
                         {
-                            renderer.material.shader = mat.shader;
+                            sf.enabled = false;
                         }
-                    }
-                    foreach (var img in player.data.weaponHandler.gun.GetComponentsInChildren<Image>(true))
-                    {
-                        if(img.material.shader == shad) continue;
-                        img.material = mat;
-                    }
+                    });
                 }
             }
 
@@ -279,7 +291,7 @@ namespace LocalZoom
             foreach (var img in obj.GetComponentsInChildren<ProceduralImage>(true))
             {
                 UnityEngine.Debug.Log(img.transform.root);
-                if(img.transform.root.GetComponent<Player>().playerID != 0)//img.transform.root.GetComponent<PhotonView>() && !(img.transform.root.GetComponent<PhotonView>().IsMine) )
+                if(img.transform.root.GetComponent<Player>().playerID == 0)//img.transform.root.GetComponent<PhotonView>() && !(img.transform.root.GetComponent<PhotonView>().IsMine) )
                 {
                     var newMat = new Material(img.material);
                     newMat.name = img.name;
@@ -316,17 +328,24 @@ namespace LocalZoom
             }
             foreach (var renderer in obj.GetComponentsInChildren<TextMeshProUGUI>(true))
             {
-                if(renderer.material.shader == mat.shader) continue;
-                renderer.material = mat;
+                var newMat = new Material(renderer.fontMaterial);
+                renderer.fontMaterial = newMat;
+                newMat.SetFloat("_Stencil", 69);
+                newMat.SetFloat("_StencilComp", (float)UnityEngine.Rendering.CompareFunction.Equal);
+            }
+
+            foreach (var renderer in obj.GetComponentsInChildren<MeshRenderer>())
+            {
+                ChangeMaterial(renderer, mat);
             }
         }
 
         private static void ChangeMaterial(Renderer renderer, Material hiddenMat)
         {
-            var mat = new Material(hiddenMat);
             var mats = renderer.materials;
             for (var i = 0; i < renderer.materials.Length; i++)
             {
+                var mat = new Material(hiddenMat);
                 if(renderer.materials[i].shader == mat.shader) continue;
                 if (renderer.materials[i].name.Contains("Default"))
                 {
@@ -334,16 +353,11 @@ namespace LocalZoom
                 }
                 else
                 {
-                    // Color colorCopy = default;
-                    // if(mats[i].HasProperty("_Color")) {
-                    //     colorCopy = mats[i].color;
-                    // }
+                    if(mats[i].HasProperty("_Color")) {
+                        mat.color = mats[i].color;
+                    }
                     var textureCopy = mats[i].mainTexture;
                     mats[i] = mat;
-                    // if (mats[i].HasProperty("_Color"))
-                    // {
-                    //     mats[i].SetColor(ColorProperty, colorCopy);
-                    // }
                     mats[i].mainTexture = textureCopy;
                 }
             }
