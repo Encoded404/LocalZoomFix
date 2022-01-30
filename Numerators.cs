@@ -82,9 +82,9 @@ namespace LocalZoom
             LocalZoom.instance.ExecuteAfterSeconds(5, () =>
             {
                 UnityEngine.Debug.Log("players hidden");
+                LocalZoom.instance.MakeAllParticlesHidden();
                 LocalZoom.instance.MakeAllPlayersHidden();
                 LocalZoom.instance.GiveLocalPlayerViewCone();
-                LocalZoom.instance.MakeAllParticlesHidden();
             });
             yield break;
         }

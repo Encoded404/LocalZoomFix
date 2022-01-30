@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using System.Linq;
+using HarmonyLib;
 
 namespace LocalZoom.Patches
 {
@@ -11,7 +12,7 @@ namespace LocalZoom.Patches
             {
                 LocalZoom.instance.enableResetCamera = true;
             }
-            if(__instance.players.Count == 1)
+            if(__instance.players.Where(p=>!p.data.dead).ToList().Count == 1)
             {
                 LocalZoom.instance.enableResetCamera = true;
             }
