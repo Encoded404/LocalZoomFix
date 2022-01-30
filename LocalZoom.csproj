@@ -91,6 +91,9 @@
         <Reference Include="UnityEngine.Physics2DModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>..\..\..\SteamLibrary\steamapps\common\ROUNDS\Rounds_Data\Managed\UnityEngine.Physics2DModule.dll</HintPath>
         </Reference>
+        <Reference Include="UnityEngine.SpriteMaskModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <HintPath>..\..\..\SteamLibrary\steamapps\common\ROUNDS\Rounds_Data\Managed\UnityEngine.SpriteMaskModule.dll</HintPath>
+        </Reference>
         <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>..\..\..\SteamLibrary\steamapps\common\ROUNDS\Rounds_Data\Managed\UnityEngine.UI.dll</HintPath>
         </Reference>
@@ -105,10 +108,13 @@
         <Compile Include="LocalZoom.cs" />
         <Compile Include="Numerators.cs" />
         <Compile Include="Patches\ApplyCardStats.cs" />
+        <Compile Include="Patches\ArtHandler.cs" />
         <Compile Include="Patches\CardBar.cs" />
         <Compile Include="Patches\DamageBox.cs" />
         <Compile Include="Patches\DeathEffect.cs" />
+        <Compile Include="Patches\GeneralParticleSystem.cs" />
         <Compile Include="Patches\HealthHandler.cs" />
+        <Compile Include="Patches\MapManager.cs" />
         <Compile Include="Patches\PlayerJump.cs" />
         <Compile Include="Patches\PlayerManager.cs" />
         <Compile Include="Patches\ObjectsToSpawn.cs" />

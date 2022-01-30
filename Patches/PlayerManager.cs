@@ -11,6 +11,10 @@ namespace LocalZoom.Patches
             {
                 LocalZoom.instance.enableResetCamera = true;
             }
+            if(__instance.players.Count == 1)
+            {
+                LocalZoom.instance.enableResetCamera = true;
+            }
         }
     }
 }

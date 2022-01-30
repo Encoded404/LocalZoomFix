@@ -10,16 +10,19 @@ namespace LocalZoom
     {
         public static IEnumerator RoundEnd(IGameModeHandler gm)
         {
-            if (!(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox)
                 yield break;
-            LocalZoom.instance.enableResetCamera = false;
+            LocalZoom.instance.ExecuteAfterFrames(1, () =>
+            {
+                LocalZoom.instance.enableResetCamera = false;
+            });
             yield break;
         }
 
         public static IEnumerator RoundStart(IGameModeHandler gm)
         {
             // If not in sandbox and in offlinemode return
-            if (!(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox)
                 yield break;
             // SetCameraPosition(Vector3.zero, true);
 
@@ -28,7 +31,7 @@ namespace LocalZoom
 
         public static IEnumerator PointStart(IGameModeHandler gm)
         {
-            if (!(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox)
                 yield break;
             LocalZoom.instance.ExecuteAfterSeconds(1f, () =>
             {
@@ -36,10 +39,18 @@ namespace LocalZoom
             });
             yield break;
         }
+        
+        public static IEnumerator PointEnd(IGameModeHandler gm)
+        {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox)
+                yield break;
+            LocalZoom.instance.enableResetCamera = true;
+            yield break;
+        }
 
         public static IEnumerator StartPickPhase(IGameModeHandler gm)
         {
-            if (!(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox)
                 yield break;
             LocalZoom.instance.enableCamera = false;
             LocalZoom.instance.enableResetCamera = false;
@@ -47,7 +58,7 @@ namespace LocalZoom
         }
         public static IEnumerator EndPickPhase(IGameModeHandler gm)
         {
-            if (!(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox)
                 yield break;
             LocalZoom.instance.StartCoroutine(DisableCameraTemp());
             LocalZoom.instance.enableResetCamera = true;
@@ -56,7 +67,7 @@ namespace LocalZoom
 
         public static IEnumerator DisableCameraTemp()
         {
-            if (!(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox)
                 yield break;
             LocalZoom.instance.enableCamera = false;
             yield return new WaitForSeconds(1);
@@ -65,7 +76,16 @@ namespace LocalZoom
 
         public static IEnumerator GameStarted(IGameModeHandler gm)
         {
-
+            if (LocalZoom.IsInOfflineModeAndNotSandbox)
+                yield break;
+            UnityEngine.Debug.Log("gamestarted");
+            LocalZoom.instance.ExecuteAfterSeconds(5, () =>
+            {
+                UnityEngine.Debug.Log("players hidden");
+                LocalZoom.instance.MakeAllPlayersHidden();
+                LocalZoom.instance.GiveLocalPlayerViewCone();
+                LocalZoom.instance.MakeAllParticlesHidden();
+            });
             yield break;
         }
     }

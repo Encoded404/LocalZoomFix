@@ -1,15 +1,14 @@
-﻿using System.Collections;
-using System.Linq;
+﻿using System.Linq;
 using BepInEx;
 using HarmonyLib;
-using JetBrains.Annotations;
 using Jotunn.Utils;
 using Photon.Pun;
 using TMPro;
 using UnboundLib;
+using UnboundLib.Extensions;
 using UnboundLib.GameModes;
+using UnboundLib.Utils;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using UnityEngine.UI.ProceduralImage;
 
@@ -37,6 +36,8 @@ namespace LocalZoom
 
         private Harmony harmony;
         private static readonly int ColorProperty = Shader.PropertyToID("_Color");
+        
+        public static bool IsInOfflineModeAndNotSandbox => !(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode;
 
         // Sources:
         // Sprite stencil shader (Modified) https://prime31.github.io/stencil-buffer-occlusion/
@@ -47,10 +48,9 @@ namespace LocalZoom
         //TODO: 
         // spectator camera when dead?
         // BUG weird color change of the jump particle
-        
-        //TODO WEIRD:
-        // Somehow figure out why the stencil is showing the particles and not just nothing
-        // looks like this is some bug with a sprite mask, all particles that are hidden by a sprite mask
+
+
+        // looks like there is some bug with a sprite mask, all particles that are hidden by a mask
         // will always show up in any stencil buffer.
 
 
@@ -78,6 +78,7 @@ namespace LocalZoom
             GameModeManager.AddHook(GameModeHooks.HookPickEnd,Numerators.EndPickPhase);
             GameModeManager.AddHook(GameModeHooks.HookGameStart, Numerators.GameStarted);
             GameModeManager.AddHook(GameModeHooks.HookPointStart, Numerators.PointStart);
+            GameModeManager.AddHook(GameModeHooks.HookPointEnd, Numerators.PointEnd);
 
             try
             {
@@ -95,10 +96,8 @@ namespace LocalZoom
 
         void Update()
         {
-            // Unbound.lockInputBools["chatLock"] = isLockingInput;
-            
             // If not in sandbox and in offlinemode return
-            if (!(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode)
+            if (IsInOfflineModeAndNotSandbox)
                 return;
 
 
@@ -113,6 +112,8 @@ namespace LocalZoom
                     // SetCameraPosition(gunTransform.position + gunTransform.forward*1.5f);
                     SetCameraPosition(player.transform.position);
 
+                    
+#if DEBUG
                     if (Input.mouseScrollDelta.y > 0)
                     {
                         // zoom in
@@ -122,6 +123,7 @@ namespace LocalZoom
                         // zoom out
                         MapManager.instance.currentMap.Map.size += 1f;
                     }
+#endif
                 }
             }
 
@@ -146,120 +148,117 @@ namespace LocalZoom
                 }
             }
 
+#if DEBUG
+            if (Input.GetKeyDown(KeyCode.L))
+            {
+                MakeAllParticlesHidden();
+            }
+
             if (Input.GetKeyDown(KeyCode.N))
             {
-                var obj = new GameObject("ViewSphere");
-                obj.AddComponent<MeshFilter>();
-                var renderer = obj.AddComponent<MeshRenderer>();
-                renderer.material = new Material(shaderBundle.LoadAsset<Shader>("CustomPortal"));
-                var player = PlayerManager.instance.players.FirstOrDefault(p => p.data.view.IsMine);
-                if (player == null) return;
-                obj.AddComponent<ViewSphere>().player = player;
-                obj.transform.SetParent(player.transform);
-                obj.transform.localPosition = Vector3.zero;
-                obj.transform.SetZPosition(50);
-                obj.transform.localRotation = Quaternion.identity;
-
-                var black = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"), player.transform);
-                black.transform.localPosition = Vector3.zero;
-                black.transform.localScale = Vector3.one * 100f;
-                var circle = Instantiate(shaderBundle.LoadAsset<GameObject>("PlayerCircle"), player.transform);
-                circle.transform.localPosition = Vector3.zero;
-                circle.transform.localScale = Vector3.one * 2.7f;
-                
-                deathPortalBox = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"));
-                deathPortalBox.transform.position = Vector3.zero;
-                deathPortalBox.transform.localScale = Vector3.one * 100f;
-                deathPortalBox.GetComponent<Renderer>().material = new Material(shaderBundle.LoadAsset<Shader>("CustomPortal"));
-                deathPortalBox.transform.SetZPosition(50);
+                GiveLocalPlayerViewCone();
             }
 
             if (Input.GetKeyDown(KeyCode.M))
             {
-                var shad = shaderBundle.LoadAsset<Shader>("CustomHidden");
-                var mat = new Material(shad);
-                foreach (var player in PlayerManager.instance.players)
-                {
-                    MakeObjectHidden(player);
-
-                    MakeObjectHidden(player.data.weaponHandler.gun);
-                    this.ExecuteAfterSeconds(0.5f, () =>
-                    {
-                        foreach (var sf in player.GetComponentsInChildren<SFPolygon>())
-                        {
-                            sf.enabled = false;
-                        }
-                        foreach (var sf in player.data.weaponHandler.gun.GetComponentsInChildren<SFPolygon>())
-                        {
-                            sf.enabled = false;
-                        }
-                    });
-                }
+                MakeAllPlayersHidden();
             }
+#endif
+        }
 
-            // if (Input.GetKeyDown(KeyCode.K))
-            // {
-            //     var mat = new Material(shaderBundle.LoadAsset<Shader>("CustomHidden"));
-            //     foreach (var player in PlayerManager.instance.players)
-            //     {
-            //         foreach (var renderer in player.GetComponentsInChildren<SpriteRenderer>(true))
-            //         {
-            //             if (renderer.material.name.Contains("Default"))
-            //             {
-            //                 renderer.material = mat;
-            //             }
-            //             else
-            //             {
-            //                 renderer.material.shader = mat.shader;
-            //             }
-            //             // var material = renderer.material;
-            //             // var col = material.color;
-            //             // var tex = material.mainTexture;
-            //             //
-            //             // renderer.sharedMaterial = mat;
-            //             // renderer.sharedMaterial.color = col;
-            //             // renderer.sharedMaterial.mainTexture = tex;
-            //         }
-            //         foreach (var img in player.GetComponentsInChildren<Image>(true))
-            //         {
-            //             img.material = mat;
-            //         }
-            //         
-            //         foreach (var renderer in player.data.weaponHandler.gun.GetComponentsInChildren<SpriteRenderer>(true))
-            //         {
-            //             if (renderer.material.name.Contains("Default"))
-            //             {
-            //                 renderer.material = mat;
-            //             }
-            //             else
-            //             {
-            //                 renderer.material.shader = mat.shader;
-            //             }
-            //         }
-            //         foreach (var img in player.data.weaponHandler.gun.GetComponentsInChildren<Image>(true))
-            //         {
-            //             img.material = mat;
-            //         }
-            //         
-            //         
-            //         foreach (var ren in player.GetComponentsInChildren<ParticleSystemRenderer>(true))
-            //         {
-            //             ren.material.shader = mat.shader;
-            //         }
-            //     }
-            //
-            //     var test = Instantiate(shaderBundle.LoadAsset<GameObject>("New Sprite"));
-            //     test.transform.position = Vector3.zero;
-            //     test.transform.SetZPosition(5);
-            //     test.transform.localScale = new Vector3(13, 13, 13);
-            //     test.GetComponent<SpriteRenderer>().material.shader = shaderBundle.LoadAsset<Shader>("CustomPortal");
-            //
-            //     // var test = new GameObject("test").AddComponent<SpriteRenderer>();
-            //     // test.sharedMaterial = new Material(Shader.Find("Sprites/Default"));
-            //     // test.sprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 1, 1), Vector2.zero);
-            //     // test.color = Color.black*0.5f;
-            //
-            // }
+        public void MakeAllPlayersHidden()
+        {
+            foreach (var player in PlayerManager.instance.players)
+            {
+                MakeObjectHidden(player);
+
+                this.ExecuteAfterSeconds(0.1f, () =>
+                {
+                    MakeGunHidden(player);
+                });
+
+                // Make particles hidden
+                MakeParticleRendererHidden(player.transform.Find("PlayerSkin/Skin_PlayerOne(Clone)")
+                    .GetComponent<ParticleSystemRenderer>());
+
+            }
+        }
+
+        public void MakeGunHidden(Player player)
+        {
+            MakeObjectHidden(player.data.weaponHandler.gun);
+            foreach (var sf in player.GetComponentsInChildren<SFPolygon>(true))
+            {
+                sf.enabled = false;
+            }
+            foreach (var sf in player.data.weaponHandler.gun.GetComponentsInChildren<SFPolygon>(true))
+            {
+                Destroy(sf);
+            }
+            foreach (var mask in player.data.weaponHandler.gun.GetComponentsInChildren<SpriteMask>(true))
+            {
+                mask.GetComponent<SetTeamColor>().enabled = false;
+                mask.GetComponent<SpriteRenderer>().enabled = true;
+                mask.GetComponent<SpriteRenderer>().color = ExtraPlayerSkins.GetPlayerSkinColors(player.colorID()).color;
+                mask.enabled = false;
+            }
+        }
+
+        public void MakeParticleRendererHidden(ParticleSystemRenderer renderer)
+        {
+            renderer.maskInteraction = SpriteMaskInteraction.None;
+            var mat = new Material(shaderBundle.LoadAsset<Shader>("CustomParticleHidden"));
+            mat.SetInt("_RefLayer", 80);
+            mat.SetTexture("_MainTex", renderer.material.GetTexture("_MainTex"));
+            mat.SetColor("_Color", renderer.material.GetColor("_Color"));
+            renderer.material = mat;
+        }
+
+        public void MakeParticleRendererPortal(GameObject obj)
+        {
+            obj.GetComponent<SpriteMask>().enabled = false;
+            var mat = new Material(shaderBundle.LoadAsset<Shader>("CustomParticlePortal"));
+            mat.SetInt("_RefLayer", 80);
+            mat.color = new Color(0, 0, 0, 0);
+            obj.GetComponent<SpriteRenderer>().material = mat;
+        }
+
+        public void GiveLocalPlayerViewCone()
+        {
+            var obj = new GameObject("ViewSphere");
+            obj.AddComponent<MeshFilter>();
+            var renderer = obj.AddComponent<MeshRenderer>();
+            renderer.material = new Material(shaderBundle.LoadAsset<Shader>("CustomPortal"));
+            var player = PlayerManager.instance.players.FirstOrDefault(p => p.data.view.IsMine);
+            if (player == null) return;
+            obj.AddComponent<ViewSphere>().player = player;
+            obj.transform.SetParent(player.transform);
+            obj.transform.localPosition = Vector3.zero;
+            obj.transform.SetZPosition(50);
+            obj.transform.localRotation = Quaternion.identity;
+
+            var black = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"), player.transform);
+            black.transform.localPosition = Vector3.zero;
+            black.transform.localScale = Vector3.one * 100f;
+            var circle = Instantiate(shaderBundle.LoadAsset<GameObject>("PlayerCircle"), player.transform);
+            circle.transform.localPosition = Vector3.zero;
+            circle.transform.localScale = Vector3.one * 2.7f;
+                
+            deathPortalBox = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"));
+            deathPortalBox.transform.position = Vector3.zero;
+            deathPortalBox.transform.localScale = Vector3.one * 100f;
+            deathPortalBox.GetComponent<Renderer>().material = new Material(shaderBundle.LoadAsset<Shader>("CustomPortal"));
+            deathPortalBox.transform.SetZPosition(50);
+        }
+
+        public void MakeAllParticlesHidden()
+        {
+            foreach (var renderer in MenuControllerHandler.instance.transform
+                         .Find("Visual/Rendering /FrontParticles")
+                         .GetComponentsInChildren<ParticleSystemRenderer>(true))
+            {
+                MakeParticleRendererHidden(renderer);
+            }
         }
 
         [HarmonyPatch(typeof(Map),"Start")]
@@ -279,19 +278,25 @@ namespace LocalZoom
             var lightCam = MainCam.instance.transform.parent.GetChild(1).GetChild(0);
             lightCam.position = snap ? pos : Vector3.Lerp(lightCam.position, pos, Time.deltaTime * 5);
             lightCam.SetZPosition(-100);
-            // if (snap)
-            // {
-            //     lightCam.transform.GetChild(0).localPosition = pos;
-            //     lightCam.transform.GetChild(0).SetZPosition(-100);
-            // }
         }
 
         public static void MakeObjectHidden(Component obj)
         {
+            if (IsInOfflineModeAndNotSandbox)
+                return;
             foreach (var img in obj.GetComponentsInChildren<ProceduralImage>(true))
             {
-                UnityEngine.Debug.Log(img.transform.root);
-                if(img.transform.root.GetComponent<Player>().playerID == 0)//img.transform.root.GetComponent<PhotonView>() && !(img.transform.root.GetComponent<PhotonView>().IsMine) )
+                bool condition;
+                if (PhotonNetwork.OfflineMode)
+                {
+                    condition = img.transform.root.GetComponent<Player>().playerID == 0;
+                }
+                else
+                {
+                    condition = img.transform.root.GetComponent<PhotonView>() &&
+                                !(img.transform.root.GetComponent<PhotonView>().IsMine);
+                }
+                if(condition)
                 {
                     var newMat = new Material(img.material);
                     newMat.name = img.name;
@@ -334,7 +339,7 @@ namespace LocalZoom
                 newMat.SetFloat("_StencilComp", (float)UnityEngine.Rendering.CompareFunction.Equal);
             }
 
-            foreach (var renderer in obj.GetComponentsInChildren<MeshRenderer>())
+            foreach (var renderer in obj.GetComponentsInChildren<MeshRenderer>(true))
             {
                 ChangeMaterial(renderer, mat);
             }
@@ -355,6 +360,11 @@ namespace LocalZoom
                 {
                     if(mats[i].HasProperty("_Color")) {
                         mat.color = mats[i].color;
+                    }
+
+                    if (mats[i].HasProperty("_MainTex"))
+                    {
+                        mat.SetTexture("_MainTex", mats[i].GetTexture("_MainTex"));
                     }
                     var textureCopy = mats[i].mainTexture;
                     mats[i] = mat;
