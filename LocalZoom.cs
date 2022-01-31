@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Reflection;
 using BepInEx;
 using HarmonyLib;
 using Jotunn.Utils;
@@ -26,18 +27,30 @@ namespace LocalZoom
 
         public static LocalZoom instance;
 
-        public static float defaultMapSize = 20f;
-        
+        public static float defaultMapSize => (float)typeof(MapEmbiggener.MapEmbiggener).GetField("defaultMapSize", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
+
         public bool enableCamera = true;
         public bool enableResetCamera = false;
         public GameObject deathPortalBox;
+        public GameObject phoenixCircle;
+        public GameObject phoenixBlackBox;
 
         private static AssetBundle shaderBundle;
 
         private Harmony harmony;
         private static readonly int ColorProperty = Shader.PropertyToID("_Color");
         
-        public static bool IsInOfflineModeAndNotSandbox => !(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode;
+        public static bool IsInOfflineModeAndNotSandbox
+        {
+            get
+            {
+#if DEBUG
+                return !(GM_Test.instance && GM_Test.instance.gameObject.activeSelf) && PhotonNetwork.OfflineMode;
+#else
+                return PhotonNetwork.OfflineMode;
+#endif
+            }
+        }
 
         // Sources:
         // Sprite stencil shader (Modified) https://prime31.github.io/stencil-buffer-occlusion/
@@ -48,9 +61,11 @@ namespace LocalZoom
         //TODO: 
         // spectator camera when dead?
         // BUG weird color change of the jump particle
+        // boxes don't use the particles anymore
+        // directional sounds
 
 
-        // looks like there is some bug with a sprite mask, all particles that are hidden by a mask
+        // looks like there is some unity bug with a sprite mask, all particles that are hidden by a mask
         // will always show up in any stencil buffer.
 
 
@@ -108,7 +123,7 @@ namespace LocalZoom
 
                     if (player == null || !player.data.isPlaying) return;
 
-                    var gunTransform = player.data.weaponHandler.gun.transform.GetChild(0);
+                    // var gunTransform = player.data.weaponHandler.gun.transform.GetChild(0);
                     // SetCameraPosition(gunTransform.position + gunTransform.forward*1.5f);
                     SetCameraPosition(player.transform.position);
 
@@ -168,6 +183,8 @@ namespace LocalZoom
 
         public void MakeAllPlayersHidden()
         {
+            if (IsInOfflineModeAndNotSandbox)
+                return;
             foreach (var player in PlayerManager.instance.players)
             {
                 MakeObjectHidden(player);
@@ -186,6 +203,8 @@ namespace LocalZoom
 
         public void MakeGunHidden(Player player)
         {
+            if (IsInOfflineModeAndNotSandbox)
+                return;
             MakeObjectHidden(player.data.weaponHandler.gun);
             foreach (var sf in player.GetComponentsInChildren<SFPolygon>(true))
             {
@@ -206,6 +225,8 @@ namespace LocalZoom
 
         public void MakeParticleRendererHidden(ParticleSystemRenderer renderer)
         {
+            if (IsInOfflineModeAndNotSandbox)
+                return;
             renderer.maskInteraction = SpriteMaskInteraction.None;
             var mat = new Material(shaderBundle.LoadAsset<Shader>("CustomParticleHidden"));
             mat.SetInt("_RefLayer", 80);
@@ -216,7 +237,9 @@ namespace LocalZoom
 
         public void MakeParticleRendererPortal(GameObject obj)
         {
-            obj.GetComponent<SpriteMask>().enabled = false;
+            if (IsInOfflineModeAndNotSandbox)
+                return;
+            Destroy(obj.GetComponent<SpriteMask>());
             var mat = new Material(shaderBundle.LoadAsset<Shader>("CustomParticlePortal"));
             mat.SetInt("_RefLayer", 80);
             mat.color = new Color(0, 0, 0, 0);
@@ -225,6 +248,8 @@ namespace LocalZoom
 
         public void GiveLocalPlayerViewCone()
         {
+            if (IsInOfflineModeAndNotSandbox)
+                return;
             var obj = new GameObject("ViewSphere");
             obj.AddComponent<MeshFilter>();
             var renderer = obj.AddComponent<MeshRenderer>();
@@ -236,6 +261,7 @@ namespace LocalZoom
             obj.transform.localPosition = Vector3.zero;
             obj.transform.SetZPosition(50);
             obj.transform.localRotation = Quaternion.identity;
+            obj.SetActive(false);
 
             var black = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"), player.transform);
             black.transform.localPosition = Vector3.zero;
@@ -243,30 +269,34 @@ namespace LocalZoom
             var circle = Instantiate(shaderBundle.LoadAsset<GameObject>("PlayerCircle"), player.transform);
             circle.transform.localPosition = Vector3.zero;
             circle.transform.localScale = Vector3.one * 2.7f;
+            circle.SetActive(false);
                 
             deathPortalBox = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"));
             deathPortalBox.transform.position = Vector3.zero;
             deathPortalBox.transform.localScale = Vector3.one * 100f;
             deathPortalBox.GetComponent<Renderer>().material = new Material(shaderBundle.LoadAsset<Shader>("CustomPortal"));
             deathPortalBox.transform.SetZPosition(50);
+            
+            phoenixCircle = Instantiate(shaderBundle.LoadAsset<GameObject>("PlayerCircle"));
+            phoenixCircle.transform.position = Vector3.zero;
+            phoenixCircle.transform.localScale = Vector3.one * 7.5f;
+            phoenixCircle.SetActive(false);
+            
+            phoenixBlackBox = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"));
+            phoenixBlackBox.transform.position = Vector3.zero;
+            phoenixBlackBox.transform.localScale = Vector3.one * 100f;
+            phoenixBlackBox.SetActive(false);
         }
 
         public void MakeAllParticlesHidden()
         {
+            if (IsInOfflineModeAndNotSandbox)
+                return;
             foreach (var renderer in MenuControllerHandler.instance.transform
                          .Find("Visual/Rendering /FrontParticles")
                          .GetComponentsInChildren<ParticleSystemRenderer>(true))
             {
                 MakeParticleRendererHidden(renderer);
-            }
-        }
-
-        [HarmonyPatch(typeof(Map),"Start")]
-        class MapPatchStart
-        {
-            private static void Postfix(Map __instance)
-            {
-                defaultMapSize = __instance.size;
             }
         }
 
@@ -289,12 +319,29 @@ namespace LocalZoom
                 bool condition;
                 if (PhotonNetwork.OfflineMode)
                 {
-                    condition = img.transform.root.GetComponent<Player>().playerID == 0;
+                    if (img.transform.root.GetComponent<Player>())
+                    {
+                        condition = img.transform.root.GetComponent<Player>().playerID == 0;
+                    }
+                    else
+                    {
+                        condition = img.transform.root.GetComponent<SpawnedAttack>().spawner.playerID == 0;
+                    }
                 }
                 else
                 {
-                    condition = img.transform.root.GetComponent<PhotonView>() &&
-                                !(img.transform.root.GetComponent<PhotonView>().IsMine);
+                    if (img.transform.root.GetComponent<Player>())
+                    {
+                        condition = img.transform.root.GetComponent<PhotonView>() &&
+                                    !(img.transform.root.GetComponent<PhotonView>().IsMine);
+
+                    }
+                    else
+                    {
+                        condition = !img.transform.root.GetComponent<SpawnedAttack>().spawner.GetComponent<PhotonView>()
+                            .IsMine;
+                    }
+
                 }
                 if(condition)
                 {

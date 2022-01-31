@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Linq;
 using Photon.Pun;
 using UnboundLib;
 using UnboundLib.GameModes;
@@ -35,7 +36,12 @@ namespace LocalZoom
                 yield break;
             LocalZoom.instance.ExecuteAfterSeconds(1f, () =>
             {
-                MapManager.instance.currentMap.Map.size = LocalZoom.defaultMapSize/2f;
+                MapManager.instance.currentMap.Map.size = LocalZoom.defaultMapSize/1.10f;
+                var player = PlayerManager.instance.players.First(p => p.data.view.IsMine);
+                // player.transform.Find("BlackBox").gameObject.SetActive(true);
+                player.transform.Find("PlayerCircle(Clone)").gameObject.SetActive(true);
+                player.transform.Find("ViewSphere").gameObject.SetActive(true);
+                
             });
             yield break;
         }
@@ -45,6 +51,12 @@ namespace LocalZoom
             if (LocalZoom.IsInOfflineModeAndNotSandbox)
                 yield break;
             LocalZoom.instance.enableResetCamera = true;
+
+            var player = PlayerManager.instance.players.First(p => p.data.view.IsMine);
+            // player.transform.Find("BlackBox").gameObject.SetActive(false);
+            player.transform.Find("PlayerCircle(Clone)").gameObject.SetActive(false);
+            player.transform.Find("ViewSphere").gameObject.SetActive(false);
+            
             yield break;
         }
 
