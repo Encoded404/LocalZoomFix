@@ -36,8 +36,9 @@ namespace LocalZoom
                 yield break;
             LocalZoom.instance.ExecuteAfterSeconds(1f, () =>
             {
-                MapManager.instance.currentMap.Map.size = LocalZoom.defaultMapSize/1.10f;
                 var player = PlayerManager.instance.players.First(p => p.data.view.IsMine);
+                MapManager.instance.currentMap.Map.size =
+                    LocalZoom.defaultMapSize / 1.15f * player.transform.localScale.x;
                 // player.transform.Find("BlackBox").gameObject.SetActive(true);
                 player.transform.Find("PlayerCircle(Clone)").gameObject.SetActive(true);
                 player.transform.Find("ViewSphere").gameObject.SetActive(true);

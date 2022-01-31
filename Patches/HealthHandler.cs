@@ -12,7 +12,8 @@ namespace LocalZoom.Patches
             if (__instance.GetComponent<PhotonView>().IsMine && !LocalZoom.IsInOfflineModeAndNotSandbox && !CardChoice.instance.IsPicking)
             {
                 LocalZoom.instance.enableResetCamera = false;
-                MapManager.instance.currentMap.Map.size = LocalZoom.defaultMapSize/1.10f;
+                MapManager.instance.currentMap.Map.size =
+                    LocalZoom.defaultMapSize / 1.15f * __instance.transform.localScale.x;
                 LocalZoom.instance.phoenixCircle.SetActive(false);
                 LocalZoom.instance.phoenixBlackBox.SetActive(false);
                 foreach (var player in PlayerManager.instance.players)

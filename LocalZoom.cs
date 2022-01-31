@@ -63,6 +63,7 @@ namespace LocalZoom
         // BUG weird color change of the jump particle
         // boxes don't use the particles anymore
         // directional sounds
+        // damage indicator from side
 
 
         // looks like there is some unity bug with a sprite mask, all particles that are hidden by a mask
@@ -171,7 +172,7 @@ namespace LocalZoom
 
             if (Input.GetKeyDown(KeyCode.N))
             {
-                GiveLocalPlayerViewCone();
+                GiveLocalPlayerViewCone(false);
             }
 
             if (Input.GetKeyDown(KeyCode.M))
@@ -246,7 +247,7 @@ namespace LocalZoom
             obj.GetComponent<SpriteRenderer>().material = mat;
         }
 
-        public void GiveLocalPlayerViewCone()
+        public void GiveLocalPlayerViewCone(bool disable = true)
         {
             if (IsInOfflineModeAndNotSandbox)
                 return;
@@ -261,7 +262,10 @@ namespace LocalZoom
             obj.transform.localPosition = Vector3.zero;
             obj.transform.SetZPosition(50);
             obj.transform.localRotation = Quaternion.identity;
-            obj.SetActive(false);
+            if (disable)
+            {
+                obj.SetActive(false);
+            }
 
             var black = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"), player.transform);
             black.transform.localPosition = Vector3.zero;
@@ -269,7 +273,10 @@ namespace LocalZoom
             var circle = Instantiate(shaderBundle.LoadAsset<GameObject>("PlayerCircle"), player.transform);
             circle.transform.localPosition = Vector3.zero;
             circle.transform.localScale = Vector3.one * 2.7f;
-            circle.SetActive(false);
+            if (disable)
+            {
+                circle.SetActive(false);
+            }
                 
             deathPortalBox = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"));
             deathPortalBox.transform.position = Vector3.zero;
