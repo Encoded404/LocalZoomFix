@@ -9,12 +9,12 @@ namespace LocalZoom.Patches
         [HarmonyAfter("pykess.rounds.plugins.performanceimprovements")]
         public static void Postfix(ArtHandler __instance)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
             foreach (var player in PlayerManager.instance.players)
             {
                 LocalZoom.instance.MakeGunHidden(player);
             }
-
-            
         }
     }
 }

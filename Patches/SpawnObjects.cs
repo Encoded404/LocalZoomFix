@@ -9,6 +9,9 @@ namespace LocalZoom.Patches
     {
         private static void Postfix(SpawnObjects __instance, GameObject go)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
+            
             if (go != null)
             {
                 LocalZoom.MakeObjectHidden(go.transform);

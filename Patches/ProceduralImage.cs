@@ -11,6 +11,9 @@ namespace LocalZoom.Patches
     {
         public static bool Prefix(ProceduralImage __instance, ref UnityAction ___m_OnDirtyVertsCallback)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return true;
+            
             var method = typeof(ProceduralImage).GetMethod("OnVerticesDirty",BindingFlags.NonPublic | BindingFlags.Instance);
             if (method == null)
             {

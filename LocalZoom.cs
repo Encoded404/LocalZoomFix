@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Reflection;
 using BepInEx;
+using BepInEx.Configuration;
 using HarmonyLib;
 using Jotunn.Utils;
 using Photon.Pun;
@@ -8,7 +9,9 @@ using TMPro;
 using UnboundLib;
 using UnboundLib.Extensions;
 using UnboundLib.GameModes;
+using UnboundLib.Networking;
 using UnboundLib.Utils;
+using UnboundLib.Utils.UI;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.UI.ProceduralImage;
@@ -34,6 +37,10 @@ namespace LocalZoom
         public GameObject deathPortalBox;
         public GameObject phoenixCircle;
         public GameObject phoenixBlackBox;
+
+
+        private static ConfigEntry<bool> _enableCameraConfig;
+        public static bool enableCameraSetting;
 
         private static AssetBundle shaderBundle;
 
@@ -62,7 +69,7 @@ namespace LocalZoom
         // spectator camera when dead?
         // BUG weird color change of the jump particle
         // boxes don't use the particles anymore
-        // damage indicator from side
+        // damage indicator from side?
 
 
         // looks like there is some unity bug with a sprite mask, all particles that are hidden by a mask
@@ -107,12 +114,27 @@ namespace LocalZoom
             {
                 // ignored
             }
+            _enableCameraConfig = Config.Bind("LocalZoom", "Enable Camera", true, "Enable the local camera");
+            enableCameraSetting = _enableCameraConfig.Value;
+            Unbound.RegisterHandshake(ModId, OnHandShakeCompleted);
+            
+            Unbound.RegisterMenu("LocalZoom", () => { }, CreateUI, null);
+        }
+
+        private static void CreateUI(GameObject menu)
+        {
+            MenuHandler.CreateToggle(_enableCameraConfig.Value, "Enable camera + shader", menu,
+                value => 
+                {
+                    _enableCameraConfig.Value = value;
+                    enableCameraSetting = value;
+                });
         }
 
         void Update()
         {
             // If not in sandbox and in offlinemode return
-            if (IsInOfflineModeAndNotSandbox)
+            if (IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
                 return;
 
 
@@ -425,6 +447,23 @@ namespace LocalZoom
                 }
             }
             renderer.materials = mats;
+        }
+
+        internal static void OnHandShakeCompleted()
+        {
+            UnityEngine.Debug.Log("hadshake");
+            if (PhotonNetwork.OfflineMode || PhotonNetwork.IsMasterClient)
+            {
+                UnityEngine.Debug.Log("doing rpcs");
+                NetworkingManager.RPC(typeof(LocalZoom), nameof(LocalZoom.SyncSettings), new object[] {_enableCameraConfig.Value});
+            }
+        }
+
+        [UnboundRPC]
+        public static void SyncSettings(bool enableCam)
+        {
+            UnityEngine.Debug.Log("got rpc");
+            LocalZoom.enableCameraSetting = enableCam;
         }
 
         private void OnDestroy()

@@ -11,7 +11,7 @@ namespace LocalZoom
     {
         public static IEnumerator RoundEnd(IGameModeHandler gm)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
                 yield break;
             LocalZoom.instance.ExecuteAfterFrames(1, () =>
             {
@@ -23,7 +23,7 @@ namespace LocalZoom
         public static IEnumerator RoundStart(IGameModeHandler gm)
         {
             // If not in sandbox and in offlinemode return
-            if (LocalZoom.IsInOfflineModeAndNotSandbox)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
                 yield break;
             // SetCameraPosition(Vector3.zero, true);
 
@@ -32,13 +32,15 @@ namespace LocalZoom
 
         public static IEnumerator PointStart(IGameModeHandler gm)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
                 yield break;
             LocalZoom.instance.ExecuteAfterSeconds(1f, () =>
             {
                 var player = PlayerManager.instance.players.First(p => p.data.view.IsMine);
-                MapManager.instance.currentMap.Map.size =
-                    LocalZoom.defaultMapSize / 1.15f * player.transform.localScale.x;
+                MapManager.instance.currentMap.Map.size = Mathf.Clamp(
+                    LocalZoom.defaultMapSize / 1.25f * player.transform.localScale.x, 0,
+                    LocalZoom.defaultMapSize + LocalZoom.defaultMapSize / 4);
+                    
                 // player.transform.Find("BlackBox").gameObject.SetActive(true);
                 player.transform.Find("PlayerCircle(Clone)").gameObject.SetActive(true);
                 player.transform.Find("ViewSphere").gameObject.SetActive(true);
@@ -49,7 +51,7 @@ namespace LocalZoom
         
         public static IEnumerator PointEnd(IGameModeHandler gm)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
                 yield break;
             LocalZoom.instance.enableResetCamera = true;
 
@@ -63,7 +65,7 @@ namespace LocalZoom
 
         public static IEnumerator StartPickPhase(IGameModeHandler gm)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
                 yield break;
             LocalZoom.instance.enableCamera = false;
             LocalZoom.instance.enableResetCamera = false;
@@ -71,7 +73,7 @@ namespace LocalZoom
         }
         public static IEnumerator EndPickPhase(IGameModeHandler gm)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
                 yield break;
             LocalZoom.instance.StartCoroutine(DisableCameraTemp());
             LocalZoom.instance.enableResetCamera = true;
@@ -80,7 +82,7 @@ namespace LocalZoom
 
         public static IEnumerator DisableCameraTemp()
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
                 yield break;
             LocalZoom.instance.enableCamera = false;
             yield return new WaitForSeconds(1);
@@ -89,7 +91,7 @@ namespace LocalZoom
 
         public static IEnumerator GameStarted(IGameModeHandler gm)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
                 yield break;
             UnityEngine.Debug.Log("gamestarted");
             LocalZoom.instance.ExecuteAfterSeconds(5, () =>

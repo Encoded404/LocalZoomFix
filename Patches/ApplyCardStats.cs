@@ -9,6 +9,8 @@ namespace LocalZoom.Patches
     {
         private static void Postfix(ApplyCardStats __instance, Player ___playerToUpgrade)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
             if (___playerToUpgrade != null)
             {
                 var stats = ___playerToUpgrade.GetComponent<CharacterStatModifiers>();

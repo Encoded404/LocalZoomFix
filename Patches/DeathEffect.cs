@@ -7,6 +7,9 @@ namespace LocalZoom.Patches
     {
         public static void Prefix(DeathEffect __instance)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
+            
             LocalZoom.MakeObjectHidden(__instance);
         }
     }

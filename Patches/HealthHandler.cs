@@ -9,11 +9,15 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(HealthHandler __instance)
         {
-            if (__instance.GetComponent<PhotonView>().IsMine && !LocalZoom.IsInOfflineModeAndNotSandbox && !CardChoice.instance.IsPicking)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
+            
+            if (__instance.GetComponent<PhotonView>().IsMine && !CardChoice.instance.IsPicking)
             {
                 LocalZoom.instance.enableResetCamera = false;
-                MapManager.instance.currentMap.Map.size =
-                    LocalZoom.defaultMapSize / 1.15f * __instance.transform.localScale.x;
+                MapManager.instance.currentMap.Map.size =Mathf.Clamp(
+                    LocalZoom.defaultMapSize / 1.25f * __instance.transform.localScale.x, 0,
+                    LocalZoom.defaultMapSize + LocalZoom.defaultMapSize / 4);
                 if (LocalZoom.instance.phoenixCircle != null)
                 {
                     LocalZoom.instance.phoenixCircle.SetActive(false);
@@ -31,7 +35,10 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(HealthHandler __instance)
         {
-            if (__instance.GetComponent<PhotonView>().IsMine && !LocalZoom.IsInOfflineModeAndNotSandbox && !CardChoice.instance.IsPicking)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
+            
+            if (__instance.GetComponent<PhotonView>().IsMine && !CardChoice.instance.IsPicking)
             {
                 LocalZoom.instance.enableResetCamera = false;
                 if (LocalZoom.instance.phoenixCircle != null)

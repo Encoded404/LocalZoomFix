@@ -8,6 +8,9 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(DamageBox __instance)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
+            
             if (__instance.name.Contains("_Saw"))
             {
                 __instance.GetComponentInChildren<ParticleSystemRenderer>().enabled = false;

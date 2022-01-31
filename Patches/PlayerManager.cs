@@ -8,6 +8,9 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(PlayerManager __instance, Player player)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
+            
             if (player.data.view.IsMine)
             {
                 LocalZoom.instance.enableResetCamera = true;

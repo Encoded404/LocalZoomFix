@@ -8,6 +8,9 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(ProjectileHit __instance)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
+            
             LocalZoom.MakeObjectHidden(__instance);
         }
     }

@@ -9,8 +9,9 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(MapManager __instance)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !MenuControllerHandler.instance.transform.Find("Visual/Rendering /FrontParticles").gameObject.activeSelf)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !MenuControllerHandler.instance.transform.Find("Visual/Rendering /FrontParticles").gameObject.activeSelf || !LocalZoom.enableCameraSetting)
                 return;
+            
             foreach (var mask in MapManager.instance.currentMap.Map.GetComponentsInChildren<SpriteMask>(true))
             {
                 if(mask.transform.parent.name.Contains("_Saw")) continue;

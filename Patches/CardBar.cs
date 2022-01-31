@@ -10,6 +10,9 @@ namespace LocalZoom.Patches
         [HarmonyPatch("OnHover")]
         public static bool Prefix(CardBar __instance, ref GameObject ___currentCard, CardInfo card)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return true;
+            
             if (___currentCard)
             {
                 Object.Destroy(___currentCard);
@@ -30,6 +33,9 @@ namespace LocalZoom.Patches
         [HarmonyPatch("Update")]
         public static void Prefix(CardBar __instance, ref GameObject ___currentCard)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
+            
             if (___currentCard)
             {
                 ___currentCard.transform.localScale = Vector3.Lerp(___currentCard.transform.localScale, Vector3.one * MapManager.instance.currentMap.Map.size/20f, Time.deltaTime*5f);

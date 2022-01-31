@@ -8,6 +8,9 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(PlayerName __instance)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
+            
             if (!__instance.transform.root.GetComponent<PhotonView>().IsMine)
             {
                 LocalZoom.MakeObjectHidden(__instance);

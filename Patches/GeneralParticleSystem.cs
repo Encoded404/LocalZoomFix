@@ -15,6 +15,9 @@ namespace LocalZoom.Patches
         
         public static void Postfix(GeneralParticleSystem __instance)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
+            
             if (GeneralParticleSystemPatch.names.Any(n=>n == __instance.transform.parent.name))
             {
                 for (int i = 0; i < __instance.transform.childCount; i++)
@@ -41,6 +44,9 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(GeneralParticleSystem __instance)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
+            
             if (GeneralParticleSystemPatch.names.Any(n=>n == __instance.transform.parent.name))
             {
                 foreach (var text in __instance.transform.parent.GetComponentsInChildren<TextMeshProUGUI>())
@@ -55,6 +61,9 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(GeneralParticleSystem __instance)
         {
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+                return;
+            
             if (GeneralParticleSystemPatch.names.Any(n=>n == __instance.transform.parent.name))
             {
                 foreach (var text in __instance.transform.parent.GetComponentsInChildren<TextMeshProUGUI>())
