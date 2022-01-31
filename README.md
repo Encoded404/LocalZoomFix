@@ -1,5 +1,6 @@
-# Better chat
-A new and improved reworked chat
+# Local zoom
+A new play style for Rounds  
+best used with a custom gamemode
 
 <details>
 <summary>Previews</summary>
@@ -11,14 +12,6 @@ A new and improved reworked chat
 
 ## Features
 
-- Fully customizable chat window
-- Use enter to open and close the window
-- Use up and down arrow to scroll through chat history
-- If you want to open the vanilla chat windows use `left-shift` + `Enter`
-- This mod can fully be used clientside
-- Global saving of the config
-  
-### Known issues
-
-- If you type to the max character limit and re-open the chat the text becomes invisible
-    - How to fix: remove all text and close and re-open the chat window
+- Camera that follows the player
+- Flashlight like shader
+- Directional sounds

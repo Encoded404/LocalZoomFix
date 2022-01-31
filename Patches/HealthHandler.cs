@@ -14,8 +14,11 @@ namespace LocalZoom.Patches
                 LocalZoom.instance.enableResetCamera = false;
                 MapManager.instance.currentMap.Map.size =
                     LocalZoom.defaultMapSize / 1.15f * __instance.transform.localScale.x;
-                LocalZoom.instance.phoenixCircle.SetActive(false);
-                LocalZoom.instance.phoenixBlackBox.SetActive(false);
+                if (LocalZoom.instance.phoenixCircle != null)
+                {
+                    LocalZoom.instance.phoenixCircle.SetActive(false);
+                    LocalZoom.instance.phoenixBlackBox.SetActive(false);
+                }
                 foreach (var player in PlayerManager.instance.players)
                 {
                     LocalZoom.instance.MakeGunHidden(player);
@@ -31,11 +34,15 @@ namespace LocalZoom.Patches
             if (__instance.GetComponent<PhotonView>().IsMine && !LocalZoom.IsInOfflineModeAndNotSandbox && !CardChoice.instance.IsPicking)
             {
                 LocalZoom.instance.enableResetCamera = false;
-                LocalZoom.instance.phoenixCircle.transform.position = __instance.transform.position;
-                LocalZoom.instance.phoenixCircle.transform.localScale = Vector3.one * 7.5f * __instance.transform.localScale.x;
-                LocalZoom.instance.phoenixCircle.SetActive(true);
-                LocalZoom.instance.phoenixBlackBox.transform.position = __instance.transform.position;
-                LocalZoom.instance.phoenixBlackBox.SetActive(true);
+                if (LocalZoom.instance.phoenixCircle != null)
+                {
+                    LocalZoom.instance.phoenixCircle.transform.position = __instance.transform.position;
+                    LocalZoom.instance.phoenixCircle.transform.localScale =
+                        Vector3.one * 7.5f * __instance.transform.localScale.x;
+                    LocalZoom.instance.phoenixCircle.SetActive(true);
+                    LocalZoom.instance.phoenixBlackBox.transform.position = __instance.transform.position;
+                    LocalZoom.instance.phoenixBlackBox.SetActive(true);
+                }
             }
         }
     }

@@ -62,7 +62,6 @@ namespace LocalZoom
         // spectator camera when dead?
         // BUG weird color change of the jump particle
         // boxes don't use the particles anymore
-        // directional sounds
         // damage indicator from side
 
 
