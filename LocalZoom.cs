@@ -4,6 +4,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using Jotunn.Utils;
+using MapEmbiggener.Controllers;
 using Photon.Pun;
 using TMPro;
 using UnboundLib;
@@ -29,8 +30,6 @@ namespace LocalZoom
         public const string Version = "1.0.0";
 
         public static LocalZoom instance;
-
-        public static float defaultMapSize => (float)typeof(MapEmbiggener.MapEmbiggener).GetField("defaultMapSize", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
 
         public bool enableCamera = true;
         public bool enableResetCamera = false;
@@ -92,16 +91,10 @@ namespace LocalZoom
             
             harmony = new Harmony(ModId);
             harmony.PatchAll();
-
-            // Unbound.RegisterClientSideMod(ModId);
-            GameModeManager.AddHook(GameModeHooks.HookRoundStart, Numerators.RoundStart);
-            GameModeManager.AddHook(GameModeHooks.HookRoundEnd, Numerators.RoundEnd);
-            GameModeManager.AddHook(GameModeHooks.HookPickStart, Numerators.StartPickPhase);
-            GameModeManager.AddHook(GameModeHooks.HookPickEnd,Numerators.EndPickPhase);
-            GameModeManager.AddHook(GameModeHooks.HookGameStart, Numerators.GameStarted);
-            GameModeManager.AddHook(GameModeHooks.HookPointStart, Numerators.PointStart);
-            GameModeManager.AddHook(GameModeHooks.HookPointEnd, Numerators.PointEnd);
-
+            
+            ControllerManager.AddCameraController(ModId, new MyCameraController());
+            ControllerManager.SetCameraController(ModId);
+            
             try
             {
                 shaderBundle = AssetUtils.LoadAssetBundleFromResources("localcam", typeof(LocalZoom).Assembly);
@@ -128,6 +121,14 @@ namespace LocalZoom
                 {
                     _enableCameraConfig.Value = value;
                     enableCameraSetting = value;
+                    if (value)
+                    {
+                        ControllerManager.SetCameraController(ModId);
+                    }
+                    else
+                    {
+                        ControllerManager.SetCameraController(ControllerManager.DefaultCameraControllerID);
+                    }
                 });
         }
 
@@ -136,54 +137,6 @@ namespace LocalZoom
             // If not in sandbox and in offlinemode return
             if (IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
                 return;
-
-
-            if(GameManager.instance.battleOngoing && !CardChoice.instance.IsPicking && !enableResetCamera) {
-                if (enableCamera)
-                {
-                    var player = PlayerManager.instance.players.FirstOrDefault(p => p.data.view.IsMine);
-
-                    if (player == null || !player.data.isPlaying) return;
-
-                    // var gunTransform = player.data.weaponHandler.gun.transform.GetChild(0);
-                    // SetCameraPosition(gunTransform.position + gunTransform.forward*1.5f);
-                    SetCameraPosition(player.transform.position);
-
-                    
-#if DEBUG
-                    if (Input.mouseScrollDelta.y > 0)
-                    {
-                        // zoom in
-                        MapManager.instance.currentMap.Map.size -= 1f;
-                    } else if (Input.mouseScrollDelta.y < 0)
-                    {
-                        // zoom out
-                        MapManager.instance.currentMap.Map.size += 1f;
-                    }
-#endif
-                }
-            }
-
-            if (!CardChoice.instance.IsPicking && enableResetCamera)
-            {
-                SetCameraPosition(Vector3.zero);
-                if (MapManager.instance.currentLevelID != 0)
-                {
-                    MapManager.instance.currentMap.Map.size = defaultMapSize;
-                }
-
-                if (deathPortalBox != null)
-                {
-                    deathPortalBox.SetActive(true);
-                }
-            }
-            else
-            {
-                if (deathPortalBox != null)
-                {
-                    deathPortalBox.SetActive(false);
-                }
-            }
 
 #if DEBUG
             if (Input.GetKeyDown(KeyCode.L))
@@ -304,6 +257,7 @@ namespace LocalZoom
             deathPortalBox.transform.localScale = Vector3.one * 100f;
             deathPortalBox.GetComponent<Renderer>().material = new Material(shaderBundle.LoadAsset<Shader>("CustomPortal"));
             deathPortalBox.transform.SetZPosition(50);
+            // deathPortalBox.SetActive(false);
             
             phoenixCircle = Instantiate(shaderBundle.LoadAsset<GameObject>("PlayerCircle"));
             phoenixCircle.transform.position = Vector3.zero;
@@ -326,16 +280,6 @@ namespace LocalZoom
             {
                 MakeParticleRendererHidden(renderer);
             }
-        }
-
-        public void SetCameraPosition(Vector3 pos, bool snap = false)
-        {
-            var mainCam = MainCam.instance.transform;
-            mainCam.position = snap? pos : Vector3.Lerp(mainCam.position, pos, Time.deltaTime * 5);
-            mainCam.SetZPosition(-100);
-            var lightCam = MainCam.instance.transform.parent.GetChild(1).GetChild(0);
-            lightCam.position = snap ? pos : Vector3.Lerp(lightCam.position, pos, Time.deltaTime * 5);
-            lightCam.SetZPosition(-100);
         }
 
         public static void MakeObjectHidden(Component obj)
@@ -451,7 +395,7 @@ namespace LocalZoom
 
         internal static void OnHandShakeCompleted()
         {
-            UnityEngine.Debug.Log("hadshake");
+            UnityEngine.Debug.Log("handshake");
             if (PhotonNetwork.OfflineMode || PhotonNetwork.IsMasterClient)
             {
                 UnityEngine.Debug.Log("doing rpcs");

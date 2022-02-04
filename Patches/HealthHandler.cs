@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using MapEmbiggener.Controllers;
 using Photon.Pun;
 using UnityEngine;
 
@@ -15,9 +16,10 @@ namespace LocalZoom.Patches
             if (__instance.GetComponent<PhotonView>().IsMine && !CardChoice.instance.IsPicking)
             {
                 LocalZoom.instance.enableResetCamera = false;
-                MapManager.instance.currentMap.Map.size =Mathf.Clamp(
-                    LocalZoom.defaultMapSize / 1.25f * __instance.transform.localScale.x, 0,
-                    LocalZoom.defaultMapSize + LocalZoom.defaultMapSize / 4);
+                var camController = (MyCameraController)ControllerManager.CurrentCameraController;
+                camController.zoomLevel = Mathf.Clamp(
+                    ControllerManager.DefaultZoom / 1.20f * (__instance.transform.localScale.x/1.15f), 0,
+                    ControllerManager.DefaultZoom + ControllerManager.DefaultZoom / 4);
                 if (LocalZoom.instance.phoenixCircle != null)
                 {
                     LocalZoom.instance.phoenixCircle.SetActive(false);

@@ -108,8 +108,8 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="MyCameraController.cs" />
         <Compile Include="LocalZoom.cs" />
-        <Compile Include="Numerators.cs" />
         <Compile Include="Patches\ApplyCardStats.cs" />
         <Compile Include="Patches\ArtHandler.cs" />
         <Compile Include="Patches\CardBar.cs" />
