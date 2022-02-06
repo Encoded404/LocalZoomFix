@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -9,7 +8,6 @@ using Photon.Pun;
 using TMPro;
 using UnboundLib;
 using UnboundLib.Extensions;
-using UnboundLib.GameModes;
 using UnboundLib.Networking;
 using UnboundLib.Utils;
 using UnboundLib.Utils.UI;
@@ -257,7 +255,7 @@ namespace LocalZoom
             deathPortalBox.transform.localScale = Vector3.one * 100f;
             deathPortalBox.GetComponent<Renderer>().material = new Material(shaderBundle.LoadAsset<Shader>("CustomPortal"));
             deathPortalBox.transform.SetZPosition(50);
-            // deathPortalBox.SetActive(false);
+            deathPortalBox.SetActive(false);
             
             phoenixCircle = Instantiate(shaderBundle.LoadAsset<GameObject>("PlayerCircle"));
             phoenixCircle.transform.position = Vector3.zero;
