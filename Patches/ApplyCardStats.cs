@@ -9,7 +9,7 @@ namespace LocalZoom.Patches
     {
         private static void Postfix(ApplyCardStats __instance, Player ___playerToUpgrade)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting)
                 return;
             if (___playerToUpgrade != null)
             {

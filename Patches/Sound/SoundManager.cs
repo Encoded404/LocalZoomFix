@@ -13,7 +13,7 @@ namespace LocalZoom.Patches
     {
         public static bool Prefix(SoundManager __instance, SoundEvent soundEvent, Transform owner)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting || owner == null || soundEvent == null)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting || owner == null || soundEvent == null)
                 return true;
             if (owner == SoundManager.Instance.GetTransform())
             {

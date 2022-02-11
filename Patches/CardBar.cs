@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using MapEmbiggener.Controllers;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,7 +11,7 @@ namespace LocalZoom.Patches
         [HarmonyPatch("OnHover")]
         public static bool Prefix(CardBar __instance, ref GameObject ___currentCard, CardInfo card)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting)
                 return true;
             
             if (___currentCard)
@@ -26,19 +27,19 @@ namespace LocalZoom.Patches
             ___currentCard.GetComponentInChildren<Canvas>().sortingLayerName = "MostFront";
             ___currentCard.GetComponentInChildren<GraphicRaycaster>().enabled = false;
             ___currentCard.GetComponentInChildren<SetScaleToZero>().enabled = false;
-            ___currentCard.transform.localScale = Vector3.one * MapManager.instance.currentMap.Map.size/20f;
+            ___currentCard.transform.localScale = Vector3.one * (ControllerManager.CurrentCameraController.ZoomTarget ?? MapManager.instance.currentMap.Map.size)/20f;
             return false;
         }
         
         [HarmonyPatch("Update")]
         public static void Prefix(CardBar __instance, ref GameObject ___currentCard)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting)
                 return;
             
             if (___currentCard)
             {
-                ___currentCard.transform.localScale = Vector3.Lerp(___currentCard.transform.localScale, Vector3.one * MapManager.instance.currentMap.Map.size/20f, Time.deltaTime*5f);
+                ___currentCard.transform.localScale = Vector3.Lerp(___currentCard.transform.localScale, Vector3.one * (ControllerManager.CurrentCameraController.ZoomTarget ?? MapManager.instance.currentMap.Map.size)/20f, Time.deltaTime*5f);
                 ___currentCard.transform.position = __instance.cardPos.transform.position;
             }
         }

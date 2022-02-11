@@ -15,7 +15,7 @@ namespace LocalZoom.Patches
         
         public static void Postfix(GeneralParticleSystem __instance)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting)
                 return;
             
             if (GeneralParticleSystemPatch.names.Any(n=>n == __instance.transform.parent.name))
@@ -44,7 +44,7 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(GeneralParticleSystem __instance)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting)
                 return;
             
             if (GeneralParticleSystemPatch.names.Any(n=>n == __instance.transform.parent.name))
@@ -61,7 +61,7 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(GeneralParticleSystem __instance)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting)
                 return;
             
             if (GeneralParticleSystemPatch.names.Any(n=>n == __instance.transform.parent.name))

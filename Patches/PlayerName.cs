@@ -8,7 +8,7 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(PlayerName __instance)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting)
                 return;
             
             if (!__instance.transform.root.GetComponent<PhotonView>().IsMine)

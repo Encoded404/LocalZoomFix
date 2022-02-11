@@ -9,7 +9,7 @@ namespace LocalZoom.Patches
         [HarmonyAfter("pykess.rounds.plugins.performanceimprovements")]
         public static void Postfix(ArtHandler __instance)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting)
                 return;
             foreach (var player in PlayerManager.instance.players)
             {

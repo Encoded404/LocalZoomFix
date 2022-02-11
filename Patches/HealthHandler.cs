@@ -10,24 +10,31 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(HealthHandler __instance)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || (!LocalZoom.enableCameraSetting && !LocalZoom.enableShaderSetting))
                 return;
             
             if (__instance.GetComponent<PhotonView>().IsMine && !CardChoice.instance.IsPicking)
             {
                 LocalZoom.instance.enableResetCamera = false;
-                var camController = (MyCameraController)ControllerManager.CurrentCameraController;
-                camController.zoomLevel = Mathf.Clamp(
-                    ControllerManager.DefaultZoom / 1.20f * (__instance.transform.localScale.x/1.15f), 0,
-                    ControllerManager.DefaultZoom + ControllerManager.DefaultZoom / 4);
-                if (LocalZoom.instance.phoenixCircle != null)
+                if (LocalZoom.enableCameraSetting)
                 {
-                    LocalZoom.instance.phoenixCircle.SetActive(false);
-                    LocalZoom.instance.phoenixBlackBox.SetActive(false);
+                    var camController = (MyCameraController)ControllerManager.CurrentCameraController;
+                    camController.zoomLevel = Mathf.Clamp(
+                        ControllerManager.DefaultZoom / 1.20f * (__instance.transform.localScale.x/1.15f), 0,
+                        ControllerManager.DefaultZoom + ControllerManager.DefaultZoom / 4);
                 }
-                foreach (var player in PlayerManager.instance.players)
+
+                if (LocalZoom.enableShaderSetting)
                 {
-                    LocalZoom.instance.MakeGunHidden(player);
+                    if (LocalZoom.instance.phoenixCircle != null)
+                    {
+                        LocalZoom.instance.phoenixCircle.SetActive(false);
+                        LocalZoom.instance.phoenixBlackBox.SetActive(false);
+                    }
+                    foreach (var player in PlayerManager.instance.players)
+                    {
+                        LocalZoom.instance.MakeGunHidden(player);
+                    }
                 }
             }
         }
@@ -37,13 +44,16 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(HealthHandler __instance)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || (!LocalZoom.enableCameraSetting && !LocalZoom.enableShaderSetting))
                 return;
             
             if (__instance.GetComponent<PhotonView>().IsMine && !CardChoice.instance.IsPicking)
             {
-                LocalZoom.instance.enableResetCamera = false;
-                if (LocalZoom.instance.phoenixCircle != null)
+                if (LocalZoom.enableCameraSetting)
+                {
+                    LocalZoom.instance.enableResetCamera = false;
+                }
+                if (LocalZoom.enableShaderSetting && LocalZoom.instance.phoenixCircle != null)
                 {
                     LocalZoom.instance.phoenixCircle.transform.position = __instance.transform.position;
                     LocalZoom.instance.phoenixCircle.transform.localScale =

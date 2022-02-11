@@ -5,6 +5,7 @@ using HarmonyLib;
 using Jotunn.Utils;
 using MapEmbiggener.Controllers;
 using Photon.Pun;
+using Sonigon;
 using TMPro;
 using UnboundLib;
 using UnboundLib.Extensions;
@@ -35,9 +36,13 @@ namespace LocalZoom
         public GameObject phoenixCircle;
         public GameObject phoenixBlackBox;
 
+        internal static LayerMask extraLayerMask;
 
         private static ConfigEntry<bool> _enableCameraConfig;
-        public static bool enableCameraSetting;
+        public static bool enableCameraSetting { get; private set; }
+        
+        private static ConfigEntry<bool> _enableShaderConfig;
+        public static bool enableShaderSetting { get; private set; }
 
         private static AssetBundle shaderBundle;
 
@@ -67,6 +72,7 @@ namespace LocalZoom
         // BUG weird color change of the jump particle
         // boxes don't use the particles anymore
         // damage indicator from side?
+        // settings to customize the ViewSphere
 
 
         // looks like there is some unity bug with a sprite mask, all particles that are hidden by a mask
@@ -89,10 +95,7 @@ namespace LocalZoom
             
             harmony = new Harmony(ModId);
             harmony.PatchAll();
-            
-            ControllerManager.AddCameraController(ModId, new MyCameraController());
-            ControllerManager.SetCameraController(ModId);
-            
+
             try
             {
                 shaderBundle = AssetUtils.LoadAssetBundleFromResources("localcam", typeof(LocalZoom).Assembly);
@@ -107,6 +110,15 @@ namespace LocalZoom
             }
             _enableCameraConfig = Config.Bind("LocalZoom", "Enable Camera", true, "Enable the local camera");
             enableCameraSetting = _enableCameraConfig.Value;
+            _enableShaderConfig = Config.Bind("LocalZoom", "Enable Shader", true, "Enable the local camera shader");
+            enableShaderSetting = _enableShaderConfig.Value;
+            
+            ControllerManager.AddCameraController(ModId, new MyCameraController());
+            if (_enableCameraConfig.Value)
+            {
+                ControllerManager.SetCameraController(ModId);
+            }
+            
             Unbound.RegisterHandshake(ModId, OnHandShakeCompleted);
             
             Unbound.RegisterMenu("LocalZoom", () => { }, CreateUI, null);
@@ -114,12 +126,27 @@ namespace LocalZoom
 
         private static void CreateUI(GameObject menu)
         {
-            MenuHandler.CreateToggle(_enableCameraConfig.Value, "Enable camera + shader", menu,
+            MenuHandler.CreateToggle(_enableCameraConfig.Value, "Enable camera", menu,
                 value => 
                 {
                     _enableCameraConfig.Value = value;
                     enableCameraSetting = value;
-                    if (value)
+                    if (enableShaderSetting || enableCameraSetting)
+                    {
+                        ControllerManager.SetCameraController(ModId);
+                    }
+                    else
+                    {
+                        ControllerManager.SetCameraController(ControllerManager.DefaultCameraControllerID);
+                    }
+                });
+            
+            MenuHandler.CreateToggle(_enableShaderConfig.Value, "Enable shader", menu,
+                value => 
+                {
+                    _enableShaderConfig.Value = value;
+                    enableShaderSetting = value;
+                    if (enableShaderSetting || enableCameraSetting)
                     {
                         ControllerManager.SetCameraController(ModId);
                     }
@@ -133,7 +160,7 @@ namespace LocalZoom
         void Update()
         {
             // If not in sandbox and in offlinemode return
-            if (IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting)
                 return;
 
 #if DEBUG
@@ -241,7 +268,7 @@ namespace LocalZoom
 
             var black = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"), player.transform);
             black.transform.localPosition = Vector3.zero;
-            black.transform.localScale = Vector3.one * 100f;
+            black.transform.localScale = Vector3.one * 1000f;
             var circle = Instantiate(shaderBundle.LoadAsset<GameObject>("PlayerCircle"), player.transform);
             circle.transform.localPosition = Vector3.zero;
             circle.transform.localScale = Vector3.one * 2.7f;
@@ -252,7 +279,7 @@ namespace LocalZoom
                 
             deathPortalBox = Instantiate(shaderBundle.LoadAsset<GameObject>("BlackBox"));
             deathPortalBox.transform.position = Vector3.zero;
-            deathPortalBox.transform.localScale = Vector3.one * 100f;
+            deathPortalBox.transform.localScale = Vector3.one * 1000f;
             deathPortalBox.GetComponent<Renderer>().material = new Material(shaderBundle.LoadAsset<Shader>("CustomPortal"));
             deathPortalBox.transform.SetZPosition(50);
             deathPortalBox.SetActive(false);
@@ -393,20 +420,66 @@ namespace LocalZoom
 
         internal static void OnHandShakeCompleted()
         {
-            UnityEngine.Debug.Log("handshake");
             if (PhotonNetwork.OfflineMode || PhotonNetwork.IsMasterClient)
             {
-                UnityEngine.Debug.Log("doing rpcs");
-                NetworkingManager.RPC(typeof(LocalZoom), nameof(LocalZoom.SyncSettings), new object[] {_enableCameraConfig.Value});
+                NetworkingManager.RPC(typeof(LocalZoom), nameof(LocalZoom.SyncSettings), new object[] {_enableCameraConfig.Value, _enableShaderConfig.Value});
             }
         }
 
         [UnboundRPC]
-        public static void SyncSettings(bool enableCam)
+        public static void SyncSettings(bool enableCam, bool enableShader)
         {
-            UnityEngine.Debug.Log("got rpc");
             LocalZoom.enableCameraSetting = enableCam;
+            LocalZoom.enableShaderSetting = enableShader;
         }
+
+
+        /// <summary>
+        /// This will need to be called on a RPC on all players before OnGameStart is called
+        /// </summary>
+        /// <param name="enable"></param>
+        public static void SetEnableCameraSetting(bool enable)
+        {
+            _enableCameraConfig.Value = enable;
+            enableCameraSetting = enable;
+            if (enableShaderSetting || enableCameraSetting)
+            {
+                ControllerManager.SetCameraController(ModId);
+            }
+            else
+            {
+                ControllerManager.SetCameraController(ControllerManager.DefaultCameraControllerID);
+            }
+        }
+
+        /// <summary>
+        /// This will need to be called on a RPC on all players before OnGameStart is called
+        /// </summary>
+        /// <param name="enable"></param>
+        public static void SetEnableShaderSetting(bool enable)
+        {
+            _enableShaderConfig.Value = enable;
+            enableShaderSetting = enable;
+            if (enableShaderSetting || enableCameraSetting)
+            {
+                ControllerManager.SetCameraController(ModId);
+            }
+            else
+            {
+                ControllerManager.SetCameraController(ControllerManager.DefaultCameraControllerID);
+            }
+        }
+        
+        public static void AddIgnoreLayerToMask(int layer)
+        {
+            extraLayerMask |= 1 << layer;
+        }
+        
+        public static void AddIgnoreLayerToMask(LayerMask layer)
+        {
+            extraLayerMask |= layer;
+        }
+        
 
         private void OnDestroy()
         {

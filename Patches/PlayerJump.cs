@@ -7,7 +7,7 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(PlayerJump __instance)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting)
                 return;
             
             LocalZoom.MakeObjectHidden(__instance);

@@ -10,7 +10,7 @@ namespace LocalZoom.Patches
     {
         private static void Postfix(ref GameObject[] __result)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting)
                 return;
             
             foreach (GameObject obj in __result)
@@ -29,7 +29,7 @@ namespace LocalZoom.Patches
     {
         private static void Postfix(ObjectsToSpawn objectToSpawn)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting)
                 return;
             
             var obj = objectToSpawn.effect;

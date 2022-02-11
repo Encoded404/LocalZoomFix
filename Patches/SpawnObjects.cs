@@ -9,7 +9,7 @@ namespace LocalZoom.Patches
     {
         private static void Postfix(SpawnObjects __instance, GameObject go)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !LocalZoom.enableShaderSetting)
                 return;
             
             if (go != null)

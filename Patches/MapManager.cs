@@ -9,7 +9,7 @@ namespace LocalZoom.Patches
     {
         public static void Postfix(MapManager __instance)
         {
-            if (LocalZoom.IsInOfflineModeAndNotSandbox || !MenuControllerHandler.instance.transform.Find("Visual/Rendering /FrontParticles").gameObject.activeSelf || !LocalZoom.enableCameraSetting)
+            if (LocalZoom.IsInOfflineModeAndNotSandbox || !MenuControllerHandler.instance.transform.Find("Visual/Rendering /FrontParticles").gameObject.activeSelf || !LocalZoom.enableShaderSetting)
                 return;
             
             foreach (var mask in MapManager.instance.currentMap.Map.GetComponentsInChildren<SpriteMask>(true))

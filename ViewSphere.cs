@@ -24,7 +24,8 @@ public class ViewSphere : MonoBehaviour
         layerMask = ~(LayerMask.GetMask("PlayerObjectCollider") | 
                       LayerMask.GetMask("Player") | 
                       LayerMask.GetMask("Projectile") | 
-                      LayerMask.GetMask("BackgroundObject"));
+                      LayerMask.GetMask("BackgroundObject") |
+                      LocalZoom.LocalZoom.extraLayerMask);
     }
 
     void LateUpdate()
