@@ -19,9 +19,7 @@ namespace LocalZoom.Patches
                 if (LocalZoom.enableCameraSetting)
                 {
                     var camController = (MyCameraController)ControllerManager.CurrentCameraController;
-                    camController.zoomLevel = Mathf.Clamp(
-                        ControllerManager.DefaultZoom / 1.20f * (__instance.transform.localScale.x/1.15f), 0,
-                        ControllerManager.DefaultZoom + ControllerManager.DefaultZoom / 4);
+                    camController.ResetZoomLevel(__instance.GetComponent<Player>());
                 }
 
                 if (LocalZoom.enableShaderSetting)

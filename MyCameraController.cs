@@ -120,9 +120,7 @@ namespace LocalZoom
             
             LocalZoom.instance.ExecuteAfterSeconds(1f, () =>
             {
-                zoomLevel = Mathf.Clamp(
-                    ControllerManager.DefaultZoom / 1.20f * (player.transform.localScale.x/1.15f), 0,
-                    ControllerManager.DefaultZoom + ControllerManager.DefaultZoom / 4);
+                ResetZoomLevel(player);
 
                 if (LocalZoom.enableShaderSetting)
                 {
@@ -133,6 +131,23 @@ namespace LocalZoom
 
             });
             yield return base.OnPointStart(gm);
+        }
+
+        public void ResetZoomLevel(Player player)
+        {
+            if (!LocalZoom.scaleCamWithBulletSpeed)
+            {
+                zoomLevel = Mathf.Clamp(
+                    ControllerManager.DefaultZoom / 1.20f * (player.transform.localScale.x/1.15f), 0,
+                    ControllerManager.DefaultZoom + ControllerManager.DefaultZoom / 4);
+                
+            }
+            else
+            {
+                zoomLevel = Mathf.Clamp(
+                    ControllerManager.DefaultZoom / 1.20f * (player.data.weaponHandler.gun.projectileSpeed/3.5f) , 0,
+                    ControllerManager.DefaultZoom + ControllerManager.DefaultZoom / 4);
+            }
         }
 
         public override IEnumerator OnPointEnd(IGameModeHandler gm)

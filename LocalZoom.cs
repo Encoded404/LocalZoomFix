@@ -36,6 +36,8 @@ namespace LocalZoom
         public GameObject phoenixCircle;
         public GameObject phoenixBlackBox;
 
+        public static bool scaleCamWithBulletSpeed;
+
         internal static LayerMask extraLayerMask;
 
         private static ConfigEntry<bool> _enableCameraConfig;
