@@ -87,6 +87,7 @@ namespace LocalZoom
             {
                 enableResetCamera = false;
                 enableCamera = true;
+                scaleCamWithBulletSpeed = false;
                 orig(self);
             };
         }
