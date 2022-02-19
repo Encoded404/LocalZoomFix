@@ -1,5 +1,6 @@
 ﻿using System;
 using HarmonyLib;
+using MapEmbiggener.Controllers;
 using UnityEngine;
 
 namespace LocalZoom.Patches
@@ -19,6 +20,8 @@ namespace LocalZoom.Patches
                     var obj = stats.objectsAddedToPlayer[stats.objectsAddedToPlayer.Count - 1];
                     LocalZoom.MakeObjectHidden(obj.transform);
                 }
+                
+                ((MyCameraController)ControllerManager.CurrentCameraController).ResetZoomLevel(___playerToUpgrade);
             }
         }
     }

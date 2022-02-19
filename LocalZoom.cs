@@ -323,9 +323,13 @@ namespace LocalZoom
                     {
                         condition = img.transform.root.GetComponent<Player>().playerID == 0;
                     }
-                    else
+                    else if(img.transform.root.GetComponent<SpawnedAttack>())
                     {
                         condition = img.transform.root.GetComponent<SpawnedAttack>().spawner.playerID == 0;
+                    }
+                    else
+                    {
+                        condition = true;
                     }
                 }
                 else
@@ -336,10 +340,14 @@ namespace LocalZoom
                                     !(img.transform.root.GetComponent<PhotonView>().IsMine);
 
                     }
-                    else
+                    else if(img.transform.root.GetComponent<SpawnedAttack>())
                     {
                         condition = !img.transform.root.GetComponent<SpawnedAttack>().spawner.GetComponent<PhotonView>()
                             .IsMine;
+                    }
+                    else
+                    {
+                        condition = true;
                     }
 
                 }

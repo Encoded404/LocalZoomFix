@@ -11,6 +11,7 @@ namespace LocalZoom
     {
         private bool firstTime = true;
         public float zoomLevel;
+        public float defaultZoomLevel = ControllerManager.DefaultZoom;
 
         public override void OnUpdate()
         {
@@ -23,8 +24,8 @@ namespace LocalZoom
                 if (firstTime)
                 {
                     firstTime = false;
-                    ZoomTarget = ControllerManager.DefaultZoom/1.25f;
-                    zoomLevel = ZoomTarget ?? ControllerManager.DefaultZoom;
+                    ZoomTarget = defaultZoomLevel/1.25f;
+                    zoomLevel = ZoomTarget ?? defaultZoomLevel;
                 }
 
                 if(GameManager.instance.battleOngoing && !CardChoice.instance.IsPicking && !LocalZoom.instance.enableResetCamera) 
@@ -64,7 +65,7 @@ namespace LocalZoom
                     zero.z = -100;
                     PositionTarget = zero;
                     
-                    zoomLevel = ControllerManager.DefaultZoom;
+                    zoomLevel = defaultZoomLevel;
                 }
 
                 if (LocalZoom.enableShaderSetting && LocalZoom.instance.deathPortalBox != null)
@@ -91,6 +92,7 @@ namespace LocalZoom
 
         public override IEnumerator OnRoundStart(IGameModeHandler gm)
         {
+            defaultZoomLevel = ControllerManager.DefaultZoom;
             yield return base.OnRoundStart(gm);
         }
 
@@ -138,15 +140,15 @@ namespace LocalZoom
             if (!LocalZoom.scaleCamWithBulletSpeed)
             {
                 zoomLevel = Mathf.Clamp(
-                    ControllerManager.DefaultZoom / 1.20f * (player.transform.localScale.x/1.15f), 0,
-                    ControllerManager.DefaultZoom + ControllerManager.DefaultZoom / 4);
+                    defaultZoomLevel / 1.20f * (player.transform.localScale.x/1.15f), 0,
+                    defaultZoomLevel + defaultZoomLevel / 4);
                 
             }
             else
             {
                 zoomLevel = Mathf.Clamp(
-                    ControllerManager.DefaultZoom / 1.20f * (player.data.weaponHandler.gun.projectileSpeed/3.5f) , 0,
-                    ControllerManager.DefaultZoom + ControllerManager.DefaultZoom / 4);
+                    defaultZoomLevel / 1.20f * (player.data.weaponHandler.gun.projectileSpeed/3.5f) , 0,
+                    defaultZoomLevel + defaultZoomLevel / 4);
             }
         }
 
@@ -211,7 +213,8 @@ namespace LocalZoom
 
             if (LocalZoom.enableCameraSetting)
             {
-                zoomLevel = ControllerManager.DefaultZoom;
+                defaultZoomLevel = ControllerManager.DefaultZoom;
+                zoomLevel = defaultZoomLevel;
             }
 
             if (LocalZoom.enableShaderSetting)
