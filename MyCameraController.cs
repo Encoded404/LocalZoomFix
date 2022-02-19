@@ -11,7 +11,7 @@ namespace LocalZoom
     {
         private bool firstTime = true;
         public float zoomLevel;
-        public float defaultZoomLevel = ControllerManager.DefaultZoom;
+        public static float defaultZoomLevel = ControllerManager.DefaultZoom;
 
         public override void OnUpdate()
         {
@@ -92,7 +92,6 @@ namespace LocalZoom
 
         public override IEnumerator OnRoundStart(IGameModeHandler gm)
         {
-            defaultZoomLevel = ControllerManager.DefaultZoom;
             yield return base.OnRoundStart(gm);
         }
 
@@ -137,6 +136,8 @@ namespace LocalZoom
 
         public void ResetZoomLevel(Player player)
         {
+            if (!player.data.view.IsMine) return;
+            
             if (!LocalZoom.scaleCamWithBulletSpeed)
             {
                 zoomLevel = Mathf.Clamp(
