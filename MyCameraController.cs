@@ -4,6 +4,7 @@ using MapEmbiggener.Controllers;
 using UnboundLib;
 using UnboundLib.GameModes;
 using UnityEngine;
+using LocalZoom.Extensions;
 
 namespace LocalZoom
 {
@@ -12,6 +13,15 @@ namespace LocalZoom
         private bool firstTime = true;
         public float zoomLevel;
         public static float defaultZoomLevel = ControllerManager.DefaultZoom;
+        public static bool allowZoomIn = false;
+
+        public float MaxZoom { get; private set; } = defaultZoomLevel;
+
+        public override IEnumerator OnInitStart(IGameModeHandler gm)
+        {
+            allowZoomIn = false; // default value - can be modified by gamemodes after OnInitStart
+            return base.OnInitStart(gm);
+        }
 
         public override void OnUpdate()
         {
@@ -26,6 +36,7 @@ namespace LocalZoom
                     firstTime = false;
                     ZoomTarget = defaultZoomLevel/1.25f;
                     zoomLevel = ZoomTarget ?? defaultZoomLevel;
+                    MaxZoom = zoomLevel;
                 }
 
                 if(GameManager.instance.battleOngoing && !CardChoice.instance.IsPicking && !LocalZoom.instance.enableResetCamera) 
@@ -42,17 +53,14 @@ namespace LocalZoom
                         playerpos.z = -100f;
                         PositionTarget = playerpos;
 
-    #if DEBUG
-                        if (Input.mouseScrollDelta.y > 0)
+                        if (LocalZoom.DEBUG || allowZoomIn)
                         {
-                            // zoom in
-                            zoomLevel -= 1f;
-                        } else if (Input.mouseScrollDelta.y < 0)
-                        {
-                            // zoom out
-                            zoomLevel += 1f;
+                            if (player.data.playerActions.PlayerZoom() != 0)
+                            {
+                                zoomLevel = UnityEngine.Mathf.Clamp(zoomLevel + player.data.playerActions.PlayerZoom(), 1f, LocalZoom.DEBUG ? float.MaxValue : MaxZoom);
+                            }
                         }
-    #endif
+
                     }
                 }
             }
@@ -151,6 +159,8 @@ namespace LocalZoom
                     defaultZoomLevel / 1.20f * (player.data.weaponHandler.gun.projectileSpeed/3.5f) , 0,
                     defaultZoomLevel + defaultZoomLevel / 4);
             }
+
+            MaxZoom = zoomLevel;
         }
 
         public override IEnumerator OnPointEnd(IGameModeHandler gm)
