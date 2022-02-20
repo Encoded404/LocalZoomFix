@@ -48,6 +48,12 @@ namespace LocalZoom
 
         private static AssetBundle shaderBundle;
 
+#if DEBUG
+        internal const bool DEBUG = true;
+#else
+        internal const bool DEBUG = false;
+#endif
+
         private Harmony harmony;
         private static readonly int ColorProperty = Shader.PropertyToID("_Color");
         
