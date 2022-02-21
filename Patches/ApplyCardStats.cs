@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace LocalZoom.Patches
 {
-    [HarmonyPatch(typeof(ApplyCardStats),"ApplyStats")]
+    [HarmonyPatch(typeof(ApplyCardStats), "ApplyStats")]
     class ApplyCardStatsPatchSpawn
     {
         private static void Postfix(ApplyCardStats __instance, Player ___playerToUpgrade)
@@ -20,7 +20,7 @@ namespace LocalZoom.Patches
                     var obj = stats.objectsAddedToPlayer[stats.objectsAddedToPlayer.Count - 1];
                     LocalZoom.MakeObjectHidden(obj.transform);
                 }
-                
+                if (ControllerManager.CurrentCameraControllerID != MyCameraController.ControllerID) { return; }
                 ((MyCameraController)ControllerManager.CurrentCameraController).ResetZoomLevel(___playerToUpgrade);
             }
         }

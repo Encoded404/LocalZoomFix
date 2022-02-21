@@ -10,6 +10,7 @@ namespace LocalZoom
 {
     public class MyCameraController : MapEmbiggener.Controllers.CameraController
     {
+        public static string ControllerID => LocalZoom.ModId;
         private bool firstTime = true;
         public float? zoomLevel = null;
         public static float defaultZoomLevel = ControllerManager.DefaultZoom;
