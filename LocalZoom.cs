@@ -96,6 +96,7 @@ namespace LocalZoom
                 enableResetCamera = false;
                 enableCamera = true;
                 scaleCamWithBulletSpeed = false;
+                enableLoSNamePlates = false;
                 orig(self);
             };
         }
