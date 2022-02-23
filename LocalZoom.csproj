@@ -48,6 +48,9 @@
         <Reference Include="BepInEx, Version=5.4.11.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>C:\Users\tddeb\AppData\Roaming\r2modmanPlus-local\ROUNDS\profiles\Default\BepInEx\core\BepInEx.dll</HintPath>
         </Reference>
+        <Reference Include="InControl, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <HintPath>..\..\..\SteamLibrary\steamapps\common\ROUNDS\Rounds_Data\Managed\InControl.dll</HintPath>
+        </Reference>
         <Reference Include="MapEmbiggener, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>C:\Users\tddeb\AppData\Roaming\r2modmanPlus-local\ROUNDS\profiles\Default\BepInEx\plugins\MapEmbiggener.dll</HintPath>
         </Reference>
@@ -108,14 +111,17 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Extensions\CharacterData.cs" />
         <Compile Include="MyCameraController.cs" />
         <Compile Include="LocalZoom.cs" />
         <Compile Include="Patches\ApplyCardStats.cs" />
         <Compile Include="Patches\ArtHandler.cs" />
         <Compile Include="Patches\CardBar.cs" />
+        <Compile Include="Patches\CharacterData.cs" />
         <Compile Include="Patches\DamageBox.cs" />
         <Compile Include="Patches\DeathEffect.cs" />
         <Compile Include="Patches\GeneralParticleSystem.cs" />
+        <Compile Include="Patches\HealthBar.cs" />
         <Compile Include="Patches\HealthHandler.cs" />
         <Compile Include="Patches\MapManager.cs" />
         <Compile Include="Patches\PlayerJump.cs" />
@@ -128,6 +134,8 @@
         <Compile Include="Patches\SpawnObjects.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="ViewSphere.cs" />
+        <Compile Include="Extensions\PlayerActions.cs" />
+        <Compile Include="Patches\PlayerActions.cs" />
     </ItemGroup>
     <ItemGroup>
       <Content Include=".gitignore" />

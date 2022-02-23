@@ -15,6 +15,7 @@ namespace LocalZoom
         public float? zoomLevel = null;
         public static float defaultZoomLevel = ControllerManager.DefaultZoom;
         public static bool allowZoomIn = false;
+        private static readonly int StencilComp = Shader.PropertyToID("_StencilComp");
 
         public float MaxZoom { get; private set; } = defaultZoomLevel;
 
@@ -69,6 +70,23 @@ namespace LocalZoom
                                 if (player.data.playerActions.PlayerZoom() != 0 && zoomLevel != null)
                                 {
                                     zoomLevel = UnityEngine.Mathf.Clamp((float)zoomLevel + player.data.playerActions.PlayerZoom(), 1f, LocalZoom.DEBUG ? float.MaxValue : MaxZoom);
+                                }
+                            }
+
+                            if (LocalZoom.enableLoSNamePlates)
+                            {
+                                foreach (var otherPlayer in PlayerManager.instance.players)
+                                {
+                                    var canSee =
+                                        PlayerManager.instance.CanSeePlayer(player.data.transform.position, otherPlayer);
+                                    if (canSee.canSee)
+                                    {
+                                        otherPlayer.data.GetPlayerNamePlate().fontMaterial.SetFloat(StencilComp, 8);
+                                    }
+                                    else
+                                    {
+                                        otherPlayer.data.GetPlayerNamePlate().fontMaterial.SetFloat(StencilComp, 3);
+                                    }
                                 }
                             }
                         }

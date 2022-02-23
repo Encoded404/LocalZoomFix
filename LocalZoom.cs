@@ -47,6 +47,8 @@ namespace LocalZoom
         public static bool enableShaderSetting { get; private set; }
 
         private static AssetBundle shaderBundle;
+        
+        public static bool enableLoSNamePlates = false;
 
 #if DEBUG
         internal const bool DEBUG = true;
@@ -238,7 +240,7 @@ namespace LocalZoom
                 return;
             renderer.maskInteraction = SpriteMaskInteraction.None;
             var mat = new Material(shaderBundle.LoadAsset<Shader>("CustomParticleHidden"));
-            mat.SetInt("_RefLayer", 80);
+            mat.SetFloat("_RefLayer", 80);
             mat.SetTexture("_MainTex", renderer.material.GetTexture("_MainTex"));
             mat.SetColor("_Color", renderer.material.GetColor("_Color"));
             renderer.material = mat;
@@ -250,7 +252,7 @@ namespace LocalZoom
                 return;
             Destroy(obj.GetComponent<SpriteMask>());
             var mat = new Material(shaderBundle.LoadAsset<Shader>("CustomParticlePortal"));
-            mat.SetInt("_RefLayer", 80);
+            mat.SetFloat("_RefLayer", 80);
             mat.color = new Color(0, 0, 0, 0);
             obj.GetComponent<SpriteRenderer>().material = mat;
         }
@@ -394,6 +396,12 @@ namespace LocalZoom
             }
             foreach (var renderer in obj.GetComponentsInChildren<TextMeshProUGUI>(true))
             {
+                if (renderer.transform.root.GetComponent<PhotonView>() &&
+                    renderer.transform.root.GetComponent<PhotonView>().IsMine)
+                {
+                    continue;
+                }
+                
                 var newMat = new Material(renderer.fontMaterial);
                 renderer.fontMaterial = newMat;
                 newMat.SetFloat("_Stencil", 69);
