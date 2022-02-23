@@ -12,11 +12,11 @@ namespace LocalZoom.Patches
         {
             if (LocalZoom.IsInOfflineModeAndNotSandbox || (!LocalZoom.enableCameraSetting && !LocalZoom.enableShaderSetting))
                 return;
-            
+
             if (__instance.GetComponent<PhotonView>().IsMine && !CardChoice.instance.IsPicking)
             {
                 LocalZoom.instance.enableResetCamera = false;
-                if (LocalZoom.enableCameraSetting)
+                if (LocalZoom.enableCameraSetting && ControllerManager.CurrentCameraControllerID == MyCameraController.ControllerID)
                 {
                     var camController = (MyCameraController)ControllerManager.CurrentCameraController;
                     camController.ResetZoomLevel(__instance.GetComponent<Player>());
@@ -44,7 +44,7 @@ namespace LocalZoom.Patches
         {
             if (LocalZoom.IsInOfflineModeAndNotSandbox || (!LocalZoom.enableCameraSetting && !LocalZoom.enableShaderSetting))
                 return;
-            
+
             if (__instance.GetComponent<PhotonView>().IsMine && !CardChoice.instance.IsPicking)
             {
                 if (LocalZoom.enableCameraSetting)

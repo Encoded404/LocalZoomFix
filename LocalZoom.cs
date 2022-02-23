@@ -24,7 +24,7 @@ namespace LocalZoom
     [BepInProcess("Rounds.exe")]
     public class LocalZoom : BaseUnityPlugin
     {
-        private const string ModId = "com.bosssloth.rounds.LocalZoom";
+        internal const string ModId = "com.bosssloth.rounds.LocalZoom";
         private const string ModName = "LocalZoom";
         public const string Version = "1.0.0";
 
@@ -122,10 +122,10 @@ namespace LocalZoom
             _enableShaderConfig = Config.Bind("LocalZoom", "Enable Shader", true, "Enable the local camera shader");
             enableShaderSetting = _enableShaderConfig.Value;
             
-            ControllerManager.AddCameraController(ModId, new MyCameraController());
+            ControllerManager.AddCameraController(MyCameraController.ControllerID, new MyCameraController());
             if (_enableCameraConfig.Value)
             {
-                ControllerManager.SetCameraController(ModId);
+                ControllerManager.SetCameraController(MyCameraController.ControllerID);
             }
             
             Unbound.RegisterHandshake(ModId, OnHandShakeCompleted);
@@ -142,7 +142,7 @@ namespace LocalZoom
                     enableCameraSetting = value;
                     if (enableShaderSetting || enableCameraSetting)
                     {
-                        ControllerManager.SetCameraController(ModId);
+                        ControllerManager.SetCameraController(MyCameraController.ControllerID);
                     }
                     else
                     {
@@ -157,7 +157,7 @@ namespace LocalZoom
                     enableShaderSetting = value;
                     if (enableShaderSetting || enableCameraSetting)
                     {
-                        ControllerManager.SetCameraController(ModId);
+                        ControllerManager.SetCameraController(MyCameraController.ControllerID);
                     }
                     else
                     {
@@ -461,7 +461,7 @@ namespace LocalZoom
             enableCameraSetting = enable;
             if (enableShaderSetting || enableCameraSetting)
             {
-                ControllerManager.SetCameraController(ModId);
+                ControllerManager.SetCameraController(MyCameraController.ControllerID);
             }
             else
             {
@@ -479,7 +479,7 @@ namespace LocalZoom
             enableShaderSetting = enable;
             if (enableShaderSetting || enableCameraSetting)
             {
-                ControllerManager.SetCameraController(ModId);
+                ControllerManager.SetCameraController(MyCameraController.ControllerID);
             }
             else
             {

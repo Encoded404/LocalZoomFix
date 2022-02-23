@@ -10,8 +10,9 @@ namespace LocalZoom
 {
     public class MyCameraController : MapEmbiggener.Controllers.CameraController
     {
+        public static string ControllerID => LocalZoom.ModId;
         private bool firstTime = true;
-        public float zoomLevel;
+        public float? zoomLevel = null;
         public static float defaultZoomLevel = ControllerManager.DefaultZoom;
         public static bool allowZoomIn = false;
 
@@ -27,7 +28,11 @@ namespace LocalZoom
         {
             // If not in sandbox and in offlinemode return
             if (LocalZoom.IsInOfflineModeAndNotSandbox || (!LocalZoom.enableCameraSetting && !LocalZoom.enableShaderSetting))
+            {
+                zoomLevel = null;
+                ZoomTarget = null;
                 return;
+            }
 
             if (LocalZoom.enableCameraSetting)
             {
@@ -36,7 +41,7 @@ namespace LocalZoom
                     firstTime = false;
                     ZoomTarget = defaultZoomLevel/1.25f;
                     zoomLevel = ZoomTarget ?? defaultZoomLevel;
-                    MaxZoom = zoomLevel;
+                    MaxZoom = zoomLevel ?? ControllerManager.Zoom;
                 }
 
                 if(GameManager.instance.battleOngoing && !CardChoice.instance.IsPicking && !LocalZoom.instance.enableResetCamera) 
@@ -45,22 +50,28 @@ namespace LocalZoom
                     {
                         var player = PlayerManager.instance.players.FirstOrDefault(p => p.data.view.IsMine);
 
-                        if (player == null || !player.data.isPlaying) return;
-
-                        // var gunTransform = player.data.weaponHandler.gun.transform.GetChild(0);
-                        // SetCameraPosition(gunTransform.position + gunTransform.forward*1.5f);
-                        var playerpos = player.data.transform.position;
-                        playerpos.z = -100f;
-                        PositionTarget = playerpos;
-
-                        if (LocalZoom.DEBUG || allowZoomIn)
+                        if (player == null || !player.data.isPlaying || player.data.dead)
                         {
-                            if (player.data.playerActions.PlayerZoom() != 0)
+                            // if the player is spectating, use the default zoom (which will fit to map size by default)
+                            zoomLevel = null;
+                            ZoomTarget = null;
+                        }
+                        else
+                        {
+                            // var gunTransform = player.data.weaponHandler.gun.transform.GetChild(0);
+                            // SetCameraPosition(gunTransform.position + gunTransform.forward*1.5f);
+                            var playerpos = player.data.transform.position;
+                            playerpos.z = -100f;
+                            PositionTarget = playerpos;
+
+                            if (LocalZoom.DEBUG || allowZoomIn)
                             {
-                                zoomLevel = UnityEngine.Mathf.Clamp(zoomLevel + player.data.playerActions.PlayerZoom(), 1f, LocalZoom.DEBUG ? float.MaxValue : MaxZoom);
+                                if (player.data.playerActions.PlayerZoom() != 0 && zoomLevel != null)
+                                {
+                                    zoomLevel = UnityEngine.Mathf.Clamp((float)zoomLevel + player.data.playerActions.PlayerZoom(), 1f, LocalZoom.DEBUG ? float.MaxValue : MaxZoom);
+                                }
                             }
                         }
-
                     }
                 }
             }
@@ -73,7 +84,7 @@ namespace LocalZoom
                     zero.z = -100;
                     PositionTarget = zero;
                     
-                    zoomLevel = defaultZoomLevel;
+                    zoomLevel = null; // use default zoom level calculated by MapEmbiggener
                 }
 
                 if (LocalZoom.enableShaderSetting && LocalZoom.instance.deathPortalBox != null)
@@ -160,7 +171,7 @@ namespace LocalZoom
                     defaultZoomLevel + defaultZoomLevel / 4);
             }
 
-            MaxZoom = zoomLevel;
+            MaxZoom = (float)zoomLevel;
         }
 
         public override IEnumerator OnPointEnd(IGameModeHandler gm)
