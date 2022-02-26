@@ -82,7 +82,7 @@ namespace LocalZoom
         // BUG weird color change of the jump particle
         // boxes don't use the particles anymore
         // damage indicator from side?
-        // settings to customize the ViewSphere
+        // settings to customize the ViewSphere?
 
 
         // looks like there is some unity bug with a sprite mask, all particles that are hidden by a mask

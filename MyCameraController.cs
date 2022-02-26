@@ -1,10 +1,12 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using MapEmbiggener.Controllers;
 using UnboundLib;
 using UnboundLib.GameModes;
 using UnityEngine;
 using LocalZoom.Extensions;
+using UnityEngine.UI;
 
 namespace LocalZoom
 {
@@ -81,10 +83,18 @@ namespace LocalZoom
                                         PlayerManager.instance.CanSeePlayer(player.data.transform.position, otherPlayer);
                                     if (canSee.canSee)
                                     {
+                                        foreach (var renderer in otherPlayer.data.GetData().allWobbleImages)
+                                        {
+                                            renderer.material.SetFloat(StencilComp, 8);
+                                        }
                                         otherPlayer.data.GetPlayerNamePlate().fontMaterial.SetFloat(StencilComp, 8);
                                     }
                                     else
                                     {
+                                        foreach (var renderer in otherPlayer.data.GetData().allWobbleImages)
+                                        {
+                                            renderer.material.SetFloat(StencilComp, 3);
+                                        }
                                         otherPlayer.data.GetPlayerNamePlate().fontMaterial.SetFloat(StencilComp, 3);
                                     }
                                 }

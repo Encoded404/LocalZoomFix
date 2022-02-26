@@ -1,6 +1,9 @@
-﻿using HarmonyLib;
+﻿using System.Linq;
+using HarmonyLib;
+using LocalZoom.Extensions;
 using UnboundLib;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace LocalZoom.Patches
 {
@@ -14,6 +17,8 @@ namespace LocalZoom.Patches
                 LocalZoom.instance.ExecuteAfterSeconds(7, () =>
                 {
                     __instance.transform.GetChild(0).GetComponent<Canvas>().sortingLayerName = "MostFront";
+                    __instance.transform.root.GetComponent<CharacterData>()
+                        .GetData().allWobbleImages.AddRange(__instance.transform.parent.GetComponentsInChildren<Image>(true));
                 });
             }
         }

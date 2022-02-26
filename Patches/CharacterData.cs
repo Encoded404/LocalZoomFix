@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using LocalZoom.Extensions;
 using TMPro;
 using UnboundLib;
 
