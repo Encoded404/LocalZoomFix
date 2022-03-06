@@ -15,10 +15,13 @@ namespace LocalZoom.Patches
             {
                 LocalZoom.instance.enableResetCamera = true;
             }
+            // the below code causes problems for gamemodes or cards with custom revives and is redundant with
+            // MyCameraController::OnUpdate
+            /*
             if(__instance.players.Where(p=>!p.data.dead).ToList().Count == 1)
             {
                 LocalZoom.instance.enableResetCamera = true;
-            }
+            }*/
         }
     }
 }
