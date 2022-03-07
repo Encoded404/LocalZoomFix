@@ -419,8 +419,7 @@ namespace LocalZoom
             {
                 foreach (var spriteRenderer in characterItem.GetComponentsInChildren<SpriteRenderer>())
                 {
-                    spriteRenderer.sortingLayerID = SortingLayer.NameToID("MostFront");
-                    spriteRenderer.sortingOrder = 0;
+                    spriteRenderer.sortingLayerName = "Player10";
                 }
             }
         }
