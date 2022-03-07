@@ -413,6 +413,16 @@ namespace LocalZoom
             {
                 ChangeMaterial(renderer, mat);
             }
+
+            // move player faces in front of background objects
+            foreach (var characterItem in obj.GetComponentsInChildren<CharacterItem>())
+            {
+                foreach (var spriteRenderer in characterItem.GetComponentsInChildren<SpriteRenderer>())
+                {
+                    spriteRenderer.sortingLayerID = SortingLayer.NameToID("MostFront");
+                    spriteRenderer.sortingOrder = 0;
+                }
+            }
         }
 
         private static void ChangeMaterial(Renderer renderer, Material hiddenMat)
