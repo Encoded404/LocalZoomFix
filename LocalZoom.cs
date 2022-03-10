@@ -77,7 +77,7 @@ namespace LocalZoom
         // https://answers.unity.com/questions/590800/how-to-cullrender-to-through-a-window.html
         // https://www.youtube.com/watch?v=CSeUMTaNFYk
 
-        //TODO: 
+        //TODO?: 
         // spectator camera when dead?
         // BUG weird color change of the jump particle
         // boxes don't use the particles anymore
@@ -207,8 +207,9 @@ namespace LocalZoom
                 });
 
                 // Make particles hidden
-                MakeParticleRendererHidden(player.transform.Find("PlayerSkin/Skin_PlayerOne(Clone)")
-                    .GetComponent<ParticleSystemRenderer>());
+                // MakeParticleRendererHidden(player.transform.Find("PlayerSkin/Skin_PlayerOne(Clone)")
+                //     .GetComponent<ParticleSystemRenderer>());
+                player.transform.Find("PlayerSkin").gameObject.SetActive(false);
 
             }
         }
