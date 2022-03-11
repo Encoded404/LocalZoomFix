@@ -206,10 +206,11 @@ namespace LocalZoom
                     MakeGunHidden(player);
                 });
 
-                // Make particles hidden
-                // MakeParticleRendererHidden(player.transform.Find("PlayerSkin/Skin_PlayerOne(Clone)")
-                //     .GetComponent<ParticleSystemRenderer>());
-                player.transform.Find("PlayerSkin").gameObject.SetActive(false);
+                try
+                {
+                    player.transform.Find("PlayerSkin").GetChild(0).GetComponent<ParticleSystemRenderer>().enabled = false;
+                }
+                catch { }
 
             }
         }
