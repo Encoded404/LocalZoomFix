@@ -86,16 +86,20 @@ namespace LocalZoom
                                         foreach (var renderer in otherPlayer.data.GetData().allWobbleImages)
                                         {
                                             renderer.material.SetFloat(StencilComp, 8);
+                                            renderer.enabled = true;
                                         }
                                         otherPlayer.data.GetPlayerNamePlate().fontMaterial.SetFloat(StencilComp, 8);
+                                        otherPlayer.data.GetPlayerNamePlate().enabled = true;
                                     }
                                     else
                                     {
                                         foreach (var renderer in otherPlayer.data.GetData().allWobbleImages)
                                         {
                                             renderer.material.SetFloat(StencilComp, 3);
+                                            renderer.enabled = false;
                                         }
                                         otherPlayer.data.GetPlayerNamePlate().fontMaterial.SetFloat(StencilComp, 3);
+                                        otherPlayer.data.GetPlayerNamePlate().enabled = false;
                                     }
                                 }
                             }

@@ -132,7 +132,9 @@ namespace LocalZoom
             }
             
             Unbound.RegisterHandshake(ModId, OnHandShakeCompleted);
-            
+
+            Unbound.RegisterCredits(ModName, new string[] { "BossSloth", "Pykess (Zoom controls, Compatibility fixes)" }, new string[] { "github", "Support BossSloth", "Support Pykess" }, new string[] { "https://github.com/tddebart/LocalZoom", "https://www.buymeacoffee.com/BossSloth", "https://ko-fi.com/pykess" });
+
             Unbound.RegisterMenu("LocalZoom", () => { }, CreateUI, null);
         }
 
