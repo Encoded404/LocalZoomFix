@@ -12,12 +12,16 @@ namespace LocalZoom
 {
     public class MyCameraController : MapEmbiggener.Controllers.CameraController
     {
+        public const float SpectatorMoveSpeed = 1f;
+        public const float SpectatorZoomSpeed = 1f;
+
         public static string ControllerID => LocalZoom.ModId;
         private bool firstTime = true;
         public float? zoomLevel = null;
         public static float defaultZoomLevel = ControllerManager.DefaultZoom;
         public static bool allowZoomIn = false;
         private static readonly int StencilComp = Shader.PropertyToID("_StencilComp");
+        public static bool wasActiveLastFrame = true;
 
         public float MaxZoom { get; private set; } = defaultZoomLevel;
 
@@ -51,11 +55,14 @@ namespace LocalZoom
                 {
                     if (LocalZoom.instance.enableCamera)
                     {
+                        wasActiveLastFrame = true;
+
                         var player = PlayerManager.instance.players.FirstOrDefault(p => p.data.view.IsMine);
 
                         if (player == null || !player.data.isPlaying || player.data.dead)
                         {
-                            // if the player is spectating, use the default zoom (which will fit to map size by default)
+                            // if the player is spectating, set enableResetCamera to true
+                            LocalZoom.instance.enableResetCamera = true;
                             zoomLevel = null;
                             ZoomTarget = null;
                         }
@@ -110,7 +117,7 @@ namespace LocalZoom
 
             if (!CardChoice.instance.IsPicking && LocalZoom.instance.enableResetCamera)
             {
-                if (LocalZoom.enableCameraSetting)
+                if (LocalZoom.enableCameraSetting && wasActiveLastFrame)
                 {
                     var zero = Vector3.zero;
                     zero.z = -100;
@@ -118,11 +125,58 @@ namespace LocalZoom
                     
                     zoomLevel = null; // use default zoom level calculated by MapEmbiggener
                 }
+                else if (LocalZoom.enableCameraSetting && LocalZoom.instance.enableSpectatorCamera)
+                {
+                    // allow spectators to move and zoom the camera
+                    Player player = PlayerManager.instance.players.FirstOrDefault(p => p.data.view.IsMine);
+                    zoomLevel = ControllerManager.Zoom; 
+
+                    if (player is null)
+                    {
+                        // fallback controls (WASD / scroll wheel)
+                        if (Input.GetKey(KeyCode.W))
+                        {
+                            PositionTarget += Vector3.up * Time.deltaTime * SpectatorMoveSpeed;
+                        }
+                        if (Input.GetKey(KeyCode.S))
+                        {
+                            PositionTarget -= Vector3.up * Time.deltaTime * SpectatorMoveSpeed;
+                        }
+                        if (Input.GetKey(KeyCode.A))
+                        {
+                            PositionTarget -= Vector3.right * Time.deltaTime * SpectatorMoveSpeed;
+                        }
+                        if (Input.GetKey(KeyCode.D))
+                        {
+                            PositionTarget += Vector3.right * Time.deltaTime * SpectatorMoveSpeed;
+                        }
+                        if (Input.mouseScrollDelta.y != 0f)
+                        {
+                            zoomLevel = UnityEngine.Mathf.Clamp((float)zoomLevel + Input.mouseScrollDelta.y * Time.deltaTime * SpectatorZoomSpeed, 1f, float.MaxValue);
+                        }
+                    }
+                    else
+                    {
+                        // use playerActions
+                        if (player.data.playerActions.PlayerZoom() != 0 && zoomLevel != null)
+                        {
+                            zoomLevel = UnityEngine.Mathf.Clamp((float)zoomLevel + player.data.playerActions.PlayerZoom(), 1f, float.MaxValue);
+                        }
+                        if (player.data.playerActions.Move != Vector2.zero)
+                        {
+                            PositionTarget += ((Vector3)player.data.playerActions.Move).x * Vector3.right * Time.deltaTime * ControllerManager.Zoom * SpectatorMoveSpeed;
+                            PositionTarget += ((Vector3)player.data.playerActions.Move).y * Vector3.up * Time.deltaTime * ControllerManager.Zoom * SpectatorMoveSpeed;
+                        }
+                    }
+
+                }
 
                 if (LocalZoom.enableShaderSetting && LocalZoom.instance.deathPortalBox != null)
                 {
                     LocalZoom.instance.deathPortalBox.SetActive(true);
                 }
+
+                wasActiveLastFrame = false;
             }
             else
             {

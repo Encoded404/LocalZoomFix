@@ -32,6 +32,7 @@ namespace LocalZoom
 
         public bool enableCamera = true;
         public bool enableResetCamera = false;
+        public bool enableSpectatorCamera = true;
         public GameObject deathPortalBox;
         public GameObject phoenixCircle;
         public GameObject phoenixBlackBox;
