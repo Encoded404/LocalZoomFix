@@ -121,9 +121,9 @@ namespace LocalZoom
             {
                 // ignored
             }
-            _enableCameraConfig = Config.Bind("LocalZoom", "Enable Camera", true, "Enable the local camera");
+            _enableCameraConfig = Config.Bind("LocalZoom", "Enable Camera", false, "Enable the local camera");
             enableCameraSetting = _enableCameraConfig.Value;
-            _enableShaderConfig = Config.Bind("LocalZoom", "Enable Shader", true, "Enable the local camera shader");
+            _enableShaderConfig = Config.Bind("LocalZoom", "Enable Shader", false, "Enable the local camera shader");
             enableShaderSetting = _enableShaderConfig.Value;
             
             ControllerManager.AddCameraController(MyCameraController.ControllerID, new MyCameraController());

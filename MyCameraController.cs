@@ -84,12 +84,30 @@ namespace LocalZoom
 
                             if (LocalZoom.enableLoSNamePlates)
                             {
+                                ViewSphere viewSphere = player.GetComponentInChildren<ViewSphere>(true);
+                                float viewDistance = viewSphere?.viewDistance ?? float.MaxValue;
+                                float fov = viewSphere?.fov ?? float.MaxValue;
                                 foreach (var otherPlayer in PlayerManager.instance.players)
                                 {
-                                    var canSee =
-                                        PlayerManager.instance.CanSeePlayer(player.data.transform.position, otherPlayer);
-                                    if (canSee.canSee)
+
+                                    bool canSee = true;
+
+                                    // check that the other player is within the viewsphere
+                                    if (Vector2.Distance(player.data.transform.position, otherPlayer.data.transform.position) > viewDistance
+                                        || Vector2.Angle(player.data.weaponHandler.gun.shootPosition.forward, otherPlayer.data.transform.position - player.data.transform.position) > fov / 2)
                                     {
+                                        // if not, then the player is not within LoS
+                                        canSee = false;
+                                    }
+
+                                    if (canSee)
+                                    {
+                                        // now check if the other player is NOT obscured
+                                        canSee = PlayerManager.instance.CanSeePlayer(player.data.transform.position, otherPlayer).canSee;
+                                    }
+                                    if (canSee)
+                                    {
+                                        // if the other player is withinLoS then enable the wobble images
                                         foreach (var renderer in otherPlayer.data.GetData().allWobbleImages)
                                         {
                                             renderer.material.SetFloat(StencilComp, 8);
@@ -100,6 +118,7 @@ namespace LocalZoom
                                     }
                                     else
                                     {
+                                        // otherwise, disable the wobble images
                                         foreach (var renderer in otherPlayer.data.GetData().allWobbleImages)
                                         {
                                             renderer.material.SetFloat(StencilComp, 3);
@@ -329,7 +348,6 @@ namespace LocalZoom
             {
                 LocalZoom.instance.ExecuteAfterSeconds(5, () =>
                 {
-                    UnityEngine.Debug.Log("players hidden");
                     LocalZoom.instance.MakeAllParticlesHidden();
                     LocalZoom.instance.MakeAllPlayersHidden();
                     LocalZoom.instance.GiveLocalPlayerViewCone();
