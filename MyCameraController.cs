@@ -103,7 +103,7 @@ namespace LocalZoom
                                     if (canSee)
                                     {
                                         // now check if the other player is NOT obscured
-                                        canSee = PlayerManager.instance.CanSeePlayer(player.data.transform.position, otherPlayer).canSee;
+                                        canSee = PlayerManager.instance.CanSeePlayer(player.data.transform.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee;
                                     }
                                     if (canSee)
                                     {

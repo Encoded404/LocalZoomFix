@@ -111,6 +111,7 @@
   <ItemGroup>
     <Compile Include="Extensions\PlayerActions.cs" />
     <Compile Include="Extensions\CharacterData.cs" />
+    <Compile Include="Extensions\PlayerManager.cs" />
     <Compile Include="MyCameraController.cs" />
     <Compile Include="LocalZoom.cs" />
     <Compile Include="Patches\ApplyCardStats.cs" />
