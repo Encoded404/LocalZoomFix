@@ -50,6 +50,8 @@ namespace LocalZoom
         private static AssetBundle shaderBundle;
         
         public static bool enableLoSNamePlates = false;
+        public static bool disableLimbClipping = false; // if true, hide weapons, shield stone, arms, and legs when they clip through walls
+        public static bool enablePlayerCircles = true; // if false, light circles around the player (which can allow limited vision through walls) will not be added
 
 #if DEBUG
         internal const bool DEBUG = true;
@@ -98,6 +100,8 @@ namespace LocalZoom
                 enableCamera = true;
                 scaleCamWithBulletSpeed = false;
                 enableLoSNamePlates = false;
+                disableLimbClipping = false;
+                enablePlayerCircles = true;
                 orig(self);
             };
         }
