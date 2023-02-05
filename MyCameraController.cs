@@ -65,6 +65,8 @@ namespace LocalZoom
                             LocalZoom.instance.enableResetCamera = true;
                             zoomLevel = null;
                             ZoomTarget = null;
+
+                            // if the player is spectating show all player components
                         }
                         else
                         {
@@ -82,224 +84,10 @@ namespace LocalZoom
                                 }
                             }
 
-                            if (LocalZoom.enableLoSNamePlates || LocalZoom.disableLimbClipping)
-                            {
-                                ViewSphere viewSphere = player.GetComponentInChildren<ViewSphere>(true);
-                                float viewDistance = viewSphere?.viewDistance ?? float.MaxValue;
-                                float fov = viewSphere?.fov ?? float.MaxValue;
-
-                                foreach (var otherPlayer in PlayerManager.instance.players.Where(p => p.playerID != player.playerID))
-                                {
-                                    bool canSeeOther = true;
-
-                                    // check that the other player is within the viewsphere
-                                    if (Vector2.Distance(player.data.transform.position, otherPlayer.data.transform.position) > viewDistance
-                                        || Vector2.Angle(player.data.weaponHandler.gun.shootPosition.forward, otherPlayer.data.transform.position - player.data.transform.position) > fov / 2)
-                                    {
-                                        // if not, then the player is not within LoS
-                                        canSeeOther = false;
-                                    }
-
-                                    if (canSeeOther)
-                                    {
-                                        // now check if the other player is NOT obscured
-                                        canSeeOther = PlayerManager.instance.CanSeePlayer(player.data.transform.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee;
-                                    }
-
-                                    if (LocalZoom.enableLoSNamePlates)
-                                    {
-                                        if (canSeeOther)
-                                        {
-                                            // if the other player is withinLoS then enable the wobble images
-                                            foreach (var renderer in otherPlayer.data.GetData().allWobbleImages)
-                                            {
-                                                renderer.material.SetFloat(StencilComp, 8);
-                                                renderer.enabled = true;
-                                            }
-                                            otherPlayer.data.GetPlayerNamePlate().fontMaterial.SetFloat(StencilComp, 8);
-                                            otherPlayer.data.GetPlayerNamePlate().enabled = true;
-                                        }
-                                        else
-                                        {
-                                            // otherwise, disable the wobble images
-                                            foreach (var renderer in otherPlayer.data.GetData().allWobbleImages)
-                                            {
-                                                renderer.material.SetFloat(StencilComp, 3);
-                                                renderer.enabled = false;
-                                            }
-                                            otherPlayer.data.GetPlayerNamePlate().fontMaterial.SetFloat(StencilComp, 3);
-                                            otherPlayer.data.GetPlayerNamePlate().enabled = false;
-                                        }
-                                    }
-
-                                    if (LocalZoom.disableLimbClipping)
-                                    {
-
-                                        // hide weapons, arms, legs, and the shield stone if their own player cannot see them
-
-                                        // if the current player has LoS to this player, then skip this and just enable everything
-
-                                        // check that the owner can see their stone (i.e. it isn't poking through a wall)
-                                        Transform shieldStone = otherPlayer.transform.Find("Limbs/ArmStuff/ShieldStone");
-                                        if (shieldStone != null)
-                                        {
-                                            bool canSeeStone = canSeeOther || PlayerManager.instance.CanSeePlayer(shieldStone.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee;
-                                            foreach (var graphic in shieldStone.GetComponentsInChildren<SpriteRenderer>(true))
-                                            {
-                                                graphic.enabled = canSeeStone;
-                                            }
-                                            foreach (var image in shieldStone.GetComponentsInChildren<Image>(true))
-                                            {
-
-                                                image.enabled = canSeeStone;
-                                            }
-                                        }
-
-                                        // check that the owner can see their weapon (i.e. it isn't poking through a wall)
-                                        Transform weapon = otherPlayer.data.weaponHandler.gun.transform;
-                                        if (weapon != null)
-                                        {
-                                            bool canSeeWeapon = canSeeOther || PlayerManager.instance.CanSeePlayer(weapon.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee;
-                                            foreach (var graphic in weapon.GetComponentsInChildren<SpriteRenderer>(true))
-                                            {
-                                                graphic.enabled = canSeeWeapon;
-                                            }
-                                            foreach (var image in weapon.GetComponentsInChildren<Image>(true))
-                                            {
-                                                // special case of ignoring unused object
-                                                if (image.name == "Image" && image.GetComponent<GridLayoutGroup>() != null)
-                                                {
-                                                    continue;
-                                                }
-
-                                                image.enabled = canSeeWeapon;
-                                            }
-                                        }
-
-                                        // show only the parts of the owner's left leg that they can see 
-                                        Transform leftLeg = otherPlayer.transform.Find("Limbs/LegStuff/LegRendererLeft");
-                                        if (leftLeg != null)
-                                        {
-                                            // check the joints in order of closest to farthest, if the player can't see any one of them, then everything past that is automatically hidden
-                                            //Transform[] joints = leftLeg.GetComponentsInChildren<Transform>(true).Where(j => j.name == "Joint(Clone)").OrderBy(j => (j.position - otherPlayer.transform.position).sqrMagnitude).ToArray();
-                                            Transform[] joints = otherPlayer.data.GetSortedLegJoints(true);
-                                            if (canSeeOther)
-                                            {
-                                                foreach (Transform joint in joints)
-                                                {
-                                                    joint.gameObject.SetActive(true);
-                                                }
-                                            }
-                                            else
-                                            {
-                                                foreach (Transform joint in joints)
-                                                {
-                                                    joint.gameObject.SetActive(false);
-                                                }
-                                                foreach (Transform joint in joints)
-                                                {
-                                                    if (!PlayerManager.instance.CanSeePlayer(joint.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee)
-                                                    {
-                                                        break;
-                                                    }
-                                                    joint.gameObject.SetActive(true);
-                                                }
-                                            }
-                                        }
-                                        // show only the parts of the owner's right leg that they can see 
-                                        Transform rightLeg = otherPlayer.transform.Find("Limbs/LegStuff/LegRendererRight");
-                                        if (rightLeg != null)
-                                        {
-                                            // check the joints in order of closest to farthest, if the player can't see any one of them, then everything past that is automatically hidden
-                                            //Transform[] joints = rightLeg.GetComponentsInChildren<Transform>(true).Where(j => j.name == "Joint(Clone)").OrderBy(j => (j.position - otherPlayer.transform.position).sqrMagnitude).ToArray();
-                                            Transform[] joints = otherPlayer.data.GetSortedLegJoints(false);
-                                            if (canSeeOther)
-                                            {
-                                                foreach (Transform joint in joints)
-                                                {
-                                                    joint.gameObject.SetActive(true);
-                                                }
-                                            }
-                                            else
-                                            {
-                                                foreach (Transform joint in joints)
-                                                {
-                                                    joint.gameObject.SetActive(false);
-                                                }
-                                                foreach (Transform joint in joints)
-                                                {
-                                                    if (!PlayerManager.instance.CanSeePlayer(joint.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee)
-                                                    {
-                                                        break;
-                                                    }
-                                                    joint.gameObject.SetActive(true);
-                                                }
-                                            }
-                                        }
-                                        // show only the parts of the owner's left arm that they can see 
-                                        Transform leftArm = otherPlayer.transform.Find("Limbs/ArmStuff/ArmRendererLeft");
-                                        if (leftArm != null)
-                                        {
-                                            // check the joints in order of closest to farthest, if the player can't see any one of them, then everything past that is automatically hidden
-                                            //Transform[] joints = leftArm.GetComponentsInChildren<Transform>(true).Where(j => j.name == "Joint(Clone)").OrderBy(j => (j.position - otherPlayer.transform.position).sqrMagnitude).ToArray();
-                                            Transform[] joints = otherPlayer.data.GetSortedArmJoints(true);
-                                            if (canSeeOther)
-                                            {
-                                                foreach (Transform joint in joints)
-                                                {
-                                                    joint.gameObject.SetActive(true);
-                                                }
-                                            }
-                                            else
-                                            {
-                                                foreach (Transform joint in joints)
-                                                {
-                                                    joint.gameObject.SetActive(false);
-                                                }
-                                                foreach (Transform joint in joints)
-                                                {
-                                                    if (!PlayerManager.instance.CanSeePlayer(joint.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee)
-                                                    {
-                                                        break;
-                                                    }
-                                                    joint.gameObject.SetActive(true);
-                                                }
-                                            }
-                                        }
-                                        // show only the parts of the owner's right arm that they can see 
-                                        Transform rightArm = otherPlayer.transform.Find("Limbs/ArmStuff/ArmRendererRight");
-                                        if (rightArm != null)
-                                        {
-                                            // check the joints in order of closest to farthest, if the player can't see any one of them, then everything past that is automatically hidden
-                                            //Transform[] joints = rightArm.GetComponentsInChildren<Transform>(true).Where(j => j.name == "Joint(Clone)").OrderBy(j => (j.position - otherPlayer.transform.position).sqrMagnitude).ToArray();
-                                            Transform[] joints = otherPlayer.data.GetSortedArmJoints(false);
-                                            if (canSeeOther)
-                                            {
-                                                foreach (Transform joint in joints)
-                                                {
-                                                    joint.gameObject.SetActive(true);
-                                                }
-                                            }
-                                            else
-                                            {
-                                                foreach (Transform joint in joints)
-                                                {
-                                                    joint.gameObject.SetActive(false);
-                                                }
-                                                foreach (Transform joint in joints)
-                                                {
-                                                    if (!PlayerManager.instance.CanSeePlayer(joint.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee)
-                                                    {
-                                                        break;
-                                                    }
-                                                    joint.gameObject.SetActive(true);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
                         }
+
+                        this.HandleExtraOptions(player);
+
                     }
                 }
             }
@@ -382,6 +170,232 @@ namespace LocalZoom
             
             
             base.OnUpdate();
+        }
+
+        private void HandleExtraOptions(Player localPlayer)
+        {
+
+            bool isSpectating = localPlayer is null || localPlayer.data.dead || !localPlayer.data.isPlaying;
+
+            if (LocalZoom.enableLoSNamePlates || LocalZoom.disableLimbClipping)
+            {
+                ViewSphere viewSphere = localPlayer.GetComponentInChildren<ViewSphere>(true);
+                float viewDistance = viewSphere?.viewDistance ?? float.MaxValue;
+                float fov = viewSphere?.fov ?? float.MaxValue;
+
+                foreach (var otherPlayer in PlayerManager.instance.players.Where(p => !p.data.dead && (isSpectating || p.playerID != localPlayer.playerID)))
+                {
+                    bool canSeeOther = true;
+
+                    if (!isSpectating)
+                    {
+                        // check that the other player is within the viewsphere
+                        if (Vector2.Distance(localPlayer.data.transform.position, otherPlayer.data.transform.position) > viewDistance
+                            || Vector2.Angle(localPlayer.data.weaponHandler.gun.shootPosition.forward, otherPlayer.data.transform.position - localPlayer.data.transform.position) > fov / 2)
+                        {
+                            // if not, then the player is not within LoS
+                            canSeeOther = false;
+                        }
+
+                        if (canSeeOther)
+                        {
+                            // now check if the other player is NOT obscured
+                            canSeeOther = PlayerManager.instance.CanSeePlayer(localPlayer.data.transform.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee;
+                        }
+                    }
+                    if (LocalZoom.enableLoSNamePlates)
+                    {
+                        if (canSeeOther)
+                        {
+                            // if the other player is withinLoS then enable the wobble images
+                            foreach (var renderer in otherPlayer.data.GetData().allWobbleImages)
+                            {
+                                renderer.material.SetFloat(StencilComp, 8);
+                                renderer.enabled = true;
+                            }
+                            otherPlayer.data.GetPlayerNamePlate().fontMaterial.SetFloat(StencilComp, 8);
+                            otherPlayer.data.GetPlayerNamePlate().enabled = true;
+                        }
+                        else
+                        {
+                            // otherwise, disable the wobble images
+                            foreach (var renderer in otherPlayer.data.GetData().allWobbleImages)
+                            {
+                                renderer.material.SetFloat(StencilComp, 3);
+                                renderer.enabled = false;
+                            }
+                            otherPlayer.data.GetPlayerNamePlate().fontMaterial.SetFloat(StencilComp, 3);
+                            otherPlayer.data.GetPlayerNamePlate().enabled = false;
+                        }
+                    }
+
+                    if (LocalZoom.disableLimbClipping)
+                    {
+
+                        // hide weapons, arms, legs, and the shield stone if their own player cannot see them
+
+                        // if the current player has LoS to this player, then skip this and just enable everything
+
+                        // check that the owner can see their stone (i.e. it isn't poking through a wall)
+                        Transform shieldStone = otherPlayer.transform.Find("Limbs/ArmStuff/ShieldStone");
+                        if (shieldStone != null)
+                        {
+                            bool canSeeStone = canSeeOther || PlayerManager.instance.CanSeePlayer(shieldStone.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee;
+                            foreach (var graphic in shieldStone.GetComponentsInChildren<SpriteRenderer>(true))
+                            {
+                                graphic.enabled = canSeeStone;
+                            }
+                            foreach (var image in shieldStone.GetComponentsInChildren<Image>(true))
+                            {
+
+                                image.enabled = canSeeStone;
+                            }
+                        }
+
+                        // check that the owner can see their weapon (i.e. it isn't poking through a wall)
+                        Transform weapon = otherPlayer.data.weaponHandler.gun.transform;
+                        if (weapon != null)
+                        {
+                            bool canSeeWeapon = canSeeOther || PlayerManager.instance.CanSeePlayer(weapon.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee;
+                            foreach (var graphic in weapon.GetComponentsInChildren<SpriteRenderer>(true))
+                            {
+                                graphic.enabled = canSeeWeapon;
+                            }
+                            foreach (var image in weapon.GetComponentsInChildren<Image>(true))
+                            {
+                                // special case of ignoring unused object
+                                if (image.name == "Image" && image.GetComponent<GridLayoutGroup>() != null)
+                                {
+                                    continue;
+                                }
+
+                                image.enabled = canSeeWeapon;
+                            }
+                        }
+
+                        // show only the parts of the owner's left leg that they can see 
+                        Transform leftLeg = otherPlayer.transform.Find("Limbs/LegStuff/LegRendererLeft");
+                        if (leftLeg != null)
+                        {
+                            // check the joints in order of closest to farthest, if the player can't see any one of them, then everything past that is automatically hidden
+                            //Transform[] joints = leftLeg.GetComponentsInChildren<Transform>(true).Where(j => j.name == "Joint(Clone)").OrderBy(j => (j.position - otherPlayer.transform.position).sqrMagnitude).ToArray();
+                            Transform[] joints = otherPlayer.data.GetSortedLegJoints(true);
+                            if (canSeeOther)
+                            {
+                                foreach (Transform joint in joints)
+                                {
+                                    joint.gameObject.SetActive(true);
+                                }
+                            }
+                            else
+                            {
+                                foreach (Transform joint in joints)
+                                {
+                                    joint.gameObject.SetActive(false);
+                                }
+                                foreach (Transform joint in joints)
+                                {
+                                    if (!PlayerManager.instance.CanSeePlayer(joint.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee)
+                                    {
+                                        break;
+                                    }
+                                    joint.gameObject.SetActive(true);
+                                }
+                            }
+                        }
+                        // show only the parts of the owner's right leg that they can see 
+                        Transform rightLeg = otherPlayer.transform.Find("Limbs/LegStuff/LegRendererRight");
+                        if (rightLeg != null)
+                        {
+                            // check the joints in order of closest to farthest, if the player can't see any one of them, then everything past that is automatically hidden
+                            //Transform[] joints = rightLeg.GetComponentsInChildren<Transform>(true).Where(j => j.name == "Joint(Clone)").OrderBy(j => (j.position - otherPlayer.transform.position).sqrMagnitude).ToArray();
+                            Transform[] joints = otherPlayer.data.GetSortedLegJoints(false);
+                            if (canSeeOther)
+                            {
+                                foreach (Transform joint in joints)
+                                {
+                                    joint.gameObject.SetActive(true);
+                                }
+                            }
+                            else
+                            {
+                                foreach (Transform joint in joints)
+                                {
+                                    joint.gameObject.SetActive(false);
+                                }
+                                foreach (Transform joint in joints)
+                                {
+                                    if (!PlayerManager.instance.CanSeePlayer(joint.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee)
+                                    {
+                                        break;
+                                    }
+                                    joint.gameObject.SetActive(true);
+                                }
+                            }
+                        }
+                        // show only the parts of the owner's left arm that they can see 
+                        Transform leftArm = otherPlayer.transform.Find("Limbs/ArmStuff/ArmRendererLeft");
+                        if (leftArm != null)
+                        {
+                            // check the joints in order of closest to farthest, if the player can't see any one of them, then everything past that is automatically hidden
+                            //Transform[] joints = leftArm.GetComponentsInChildren<Transform>(true).Where(j => j.name == "Joint(Clone)").OrderBy(j => (j.position - otherPlayer.transform.position).sqrMagnitude).ToArray();
+                            Transform[] joints = otherPlayer.data.GetSortedArmJoints(true);
+                            if (canSeeOther)
+                            {
+                                foreach (Transform joint in joints)
+                                {
+                                    joint.gameObject.SetActive(true);
+                                }
+                            }
+                            else
+                            {
+                                foreach (Transform joint in joints)
+                                {
+                                    joint.gameObject.SetActive(false);
+                                }
+                                foreach (Transform joint in joints)
+                                {
+                                    if (!PlayerManager.instance.CanSeePlayer(joint.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee)
+                                    {
+                                        break;
+                                    }
+                                    joint.gameObject.SetActive(true);
+                                }
+                            }
+                        }
+                        // show only the parts of the owner's right arm that they can see 
+                        Transform rightArm = otherPlayer.transform.Find("Limbs/ArmStuff/ArmRendererRight");
+                        if (rightArm != null)
+                        {
+                            // check the joints in order of closest to farthest, if the player can't see any one of them, then everything past that is automatically hidden
+                            //Transform[] joints = rightArm.GetComponentsInChildren<Transform>(true).Where(j => j.name == "Joint(Clone)").OrderBy(j => (j.position - otherPlayer.transform.position).sqrMagnitude).ToArray();
+                            Transform[] joints = otherPlayer.data.GetSortedArmJoints(false);
+                            if (canSeeOther)
+                            {
+                                foreach (Transform joint in joints)
+                                {
+                                    joint.gameObject.SetActive(true);
+                                }
+                            }
+                            else
+                            {
+                                foreach (Transform joint in joints)
+                                {
+                                    joint.gameObject.SetActive(false);
+                                }
+                                foreach (Transform joint in joints)
+                                {
+                                    if (!PlayerManager.instance.CanSeePlayer(joint.position, otherPlayer, PlayerManager.instance.canSeePlayerMask | LayerMask.GetMask("Corpse")).canSee)
+                                    {
+                                        break;
+                                    }
+                                    joint.gameObject.SetActive(true);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         public override IEnumerator OnRoundStart(IGameModeHandler gm)
