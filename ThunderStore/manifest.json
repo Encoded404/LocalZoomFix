@@ -1,8 +1,8 @@
 ﻿{
   "name": "LocalZoom",
   "version_number": "#VERSION#",
-  "website_url": "https://github.com/tddebart/LocalZoom",
-  "description": "The ability to zoom in on yourself",
+  "website_url": "https://github.com/pdcook/LocalZoom",
+  "description": "Custom camera features, primarily for custom gamemodes",
   "dependencies": [
     "willis81808-UnboundLib-2.10.0",
     "willis81808-MMHook-1.0.0",
