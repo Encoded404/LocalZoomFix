@@ -26,7 +26,7 @@ namespace LocalZoom
     {
         internal const string ModId = "com.bosssloth.rounds.LocalZoom";
         private const string ModName = "LocalZoom";
-        public const string Version = "1.1.0";
+        public const string Version = "1.1.1";
 
         public static LocalZoom instance;
 

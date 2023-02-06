@@ -6,6 +6,7 @@
   "dependencies": [
     "willis81808-UnboundLib-2.10.0",
     "willis81808-MMHook-1.0.0",
+    "Pykess-Map_Embiggener-2.2.0",
     "BepInEx-BepInExPack_ROUNDS-5.4.1100"
   ]
 }
