@@ -527,7 +527,7 @@ namespace LocalZoom
 
         private void OnDestroy()
         {
-            harmony.UnpatchAll(ModId);
+            harmony.UnpatchSelf();
         }
     }
 }

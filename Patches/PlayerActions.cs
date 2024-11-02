@@ -38,8 +38,8 @@ namespace LocalZoom.Patches
             // zoomIn is RightBumper + d-pad up
             // zoomOut is RightBumper + d-pad down
 
-            __result.Jump.RemoveBinding(new DeviceBindingSource(InputControlType.RightBumper));
-            __result.GetAdditionalData().modifier.AddDefaultBinding(InputControlType.RightBumper);
+            __result.Jump.RemoveBinding(new DeviceBindingSource(InputControlType.LeftBumper));
+            __result.GetAdditionalData().modifier.AddDefaultBinding(InputControlType.LeftBumper);
 
             __result.GetAdditionalData().zoomIn.AddDefaultBinding(InputControlType.DPadUp);
 
